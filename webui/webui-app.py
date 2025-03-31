@@ -1,16 +1,18 @@
 import gradio as gr
 import numpy as np
+import scripts.helperScripts as hs
 
 
-def main(img, prompt):
-    return prompt
-    
 demo = gr.Interface(
-    fn = main,
-    inputs = [gr.Image(sources=["webcam"], streaming=True), gr.Textbox(label= "Prompt", show_label=True)],
-    outputs = [gr.Textbox(label="Result", show_label=True)],
+    fn=hs.processFrame,
+    inputs=[
+        gr.Image(sources=["webcam"], streaming=True, tool="select", type="pil"),
+        gr.Textbox(label="Prompt", show_label=True),
+    ],
+    outputs=[gr.Textbox(label="Result")],
+    title="AI Video Interpreter",
     live=True,
-    flagging_mode="never"
+    flagging_mode="never",
 )
 
 demo.launch()
