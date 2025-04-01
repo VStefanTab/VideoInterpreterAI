@@ -1,4 +1,6 @@
 packaging==24.2
-pipdeptree==2.26.0
 gradio==5.23.1
 opencv-python==4.11.0.86
+llama_cpp_python==0.3.8
+transformers==4.50.3
+torch==2.6.0
