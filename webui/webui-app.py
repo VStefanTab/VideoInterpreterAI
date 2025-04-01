@@ -1,10 +1,16 @@
 import gradio as gr
-import numpy as np
-import scripts.helperScripts as hs
+from scripts.scripts import *
 
+def processRequest(image, prompt):
+    # TODO Add mechanism for getting n-th frame from video
+    frame = getFrame(image)
+    frameData = exctractFrameData(frame)
+    
+    response = generateResponse(prompt, frameData)
+    return response
 
 demo = gr.Interface(
-    fn=hs.processFrame,
+    fn=processRequest,
     inputs=[
         gr.Image(sources=["webcam"], streaming=True, tool="select", type="pil"),
         gr.Textbox(label="Prompt", show_label=True),
