@@ -1,5 +1,5 @@
 import gradio as gr
-from scripts.scripts import *
+from app.scripts import *
 
 def processRequest(image, prompt):
     # TODO Add mechanism for getting n-th frame from video
@@ -21,4 +21,4 @@ demo = gr.Interface(
     flagging_mode="never",
 )
 
-demo.launch()
+
