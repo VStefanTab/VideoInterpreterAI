@@ -22,6 +22,6 @@ with gr.Blocks() as demo:
             inputs=[input_img, input_prompt],
             outputs=output_prompt,
             time_limit=15,
-            stream_every=2,
+            stream_every=10,
             concurrency_limit=None,
         )
