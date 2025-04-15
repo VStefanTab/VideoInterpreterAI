@@ -1,5 +1,3 @@
-import base64
-import io
 import cv2
 import numpy as np
 from PIL import Image
@@ -32,12 +30,7 @@ def getFrame(image):
         else:
             pil_image = image
 
-        # Convert PIL Image to base64
-        buffered = io.BytesIO()
-        pil_image.save(buffered, format="PNG")
-        img_str = base64.b64encode(buffered.getvalue()).decode("utf-8")
-
-        return img_str
+        return pil_image
 
     except Exception as e:
         return None, f"Error processing frame: {str(e)}"
@@ -60,25 +53,32 @@ def generateResponse(prompt, image):
     text = processor.apply_chat_template(
         messages, tokenize=False, add_generation_prompt=True
     )
-    image_inputs = process_vision_info(messages)
 
     inputs = processor(
         text=[text],
-        images=image_inputs,
+        images=[image],
         padding=True,
         return_tensors="pt",
     )
     inputs = inputs.to("cuda")
 
-    generated_ids = model.generate(**inputs, max_new_tokens=128)
-    generated_ids_trimmed = [
-        out_ids[len(in_ids) :]
-        for in_ids, out_ids in zip(inputs.input_ids, generated_ids)
-    ]
-    output_text = processor.batch_decode(
-        generated_ids_trimmed,
-        skip_special_tokens=True,
-        clean_up_tokenization_spaces=False,
+    # INFO: Relies on torchvision and torch+cuda, but current torch+cu version conflicts with torchvision
+    generated_ids = model.generate(
+        **inputs,
+        max_new_tokens=128,
+        do_sample=True,
+        temperature=0.7,
+        top_p=0.9,
     )
 
-    return output_text
+    # Decode the entire output
+    raw_output = processor.batch_decode(
+        generated_ids,
+        skip_special_tokens=True,
+        clean_up_tokenization_spaces=True,
+    )
+
+    # Extract the actual response (usually after the prompt)
+    response = raw_output[0].split("Assistant:")[-1].strip()
+    
+    return response
