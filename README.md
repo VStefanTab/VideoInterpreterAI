@@ -2,8 +2,6 @@
 
 ## Alex's branch
 
-Currect model used: Qwen2.5-VL-3B-Instruct
+Currect model used: Efficient-Large-Model/VILA-7b
 
-Testing results: Fail. Reccomended to switch to NanoLLM nad probably switch model.
-
-Interface status: Mostly done. Some final tweaking might be needed.
+Code need to be copied into container with nano_llm to work. Additional changes to get_model and generateResponse may need to be changed according to nano_llm package.

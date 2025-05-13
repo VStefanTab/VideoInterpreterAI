@@ -1,6 +1,14 @@
 import gradio as gr
 from app.scripts import *
 
+
+def processRequest(image, prompt):
+    if image is None:
+        return "No frame captured"
+    response = generateResponse(prompt, image)
+    return response
+
+
 with gr.Blocks() as demo:
     with gr.Row():
         with gr.Column():
@@ -10,12 +18,6 @@ with gr.Blocks() as demo:
             input_prompt = gr.Textbox(label="Prompt", show_label=True)
         with gr.Column():
             output_prompt = gr.Textbox(label="Result")
-
-        def processRequest(image, prompt):
-            frame = getFrame(image)
-
-            response = generateResponse(prompt, frame)
-            return response
 
         input_img.stream(
             fn=processRequest,
