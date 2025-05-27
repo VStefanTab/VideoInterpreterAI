@@ -2,7 +2,6 @@ accelerate==1.7.0
 aiofiles==24.1.0
 annotated-types==0.7.0
 anyio==4.9.0
-audioop-lts==0.2.1
 certifi==2025.1.31
 charset-normalizer==3.4.1
 click==8.1.8
