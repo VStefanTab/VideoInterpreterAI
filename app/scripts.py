@@ -1,70 +1,65 @@
-import cv2
-import numpy as np
+import clip
+import torch
 from PIL import Image
+from transformers.models.blip import (BlipForConditionalGeneration,
+                                      BlipProcessor)
+
+# === Device setup ===
+device = "cuda" if torch.cuda.is_available() else "cpu"
+
+# === Load BLIP ===
+blip_processor = BlipProcessor.from_pretrained(
+    "Salesforce/blip-image-captioning-base"
+)
+blip_model = BlipForConditionalGeneration.from_pretrained(
+    "Salesforce/blip-image-captioning-base"
+)
+blip_model_used = blip_model.to(device)
+
+# === Load CLIP ===
+clip_model, clip_preprocess = clip.load("ViT-B/32", device=device)
+
+# === Concept list for CLIP matching ===
+concepts = [
+    "a person",
+    "a fire",
+    "a dog",
+    "a car",
+    "a laptop",
+    "an empty street",
+    "a crowd",
+]
+concept_tokens = clip.tokenize(concepts).to(device)
 
 
+# Optional preprocessing step
 def getFrame(image):
-    if image is None:
-        return "No frame captured"
-
-    try:
-        # Convert frame to format suitable for processing
-        if isinstance(image, np.ndarray):
-            # Convert BGR to RGB if necessary
-            frame_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-            pil_image = Image.fromarray(frame_rgb)
-        else:
-            pil_image = image
-
-        return pil_image
-
-    except Exception as e:
-        return None, f"Error processing frame: {str(e)}"
+    # Here you can resize or normalize if needed
+    return image
 
 
+# Main function to handle processing
 def generateResponse(prompt, image):
-    messages = [
-        {
-            "role": "user",
-            "content": [
-                {
-                    "type": "image",
-                    "image": image,
-                },
-                {"type": "text", "text": prompt},
-            ],
-        }
-    ]
+    # === Run BLIP for caption ===
+    inputs = blip_processor(images=image, return_tensors="pt").to(device)
+    out = blip_model.generate(**inputs)
+    caption = blip_processor.decode(out[0], skip_special_tokens=True)
 
-    # text = processor.apply_chat_template(
-    #    messages, tokenize=False, add_generation_prompt=True
-    # )
+    # === Run CLIP for matching predefined concepts ===
+    image_clip = clip_preprocess(image).unsqueeze(0).to(device)
 
-    # inputs = processor(
-    #    text=[text],
-    #    images=[image],
-    #    padding=True,
-    #    return_tensors="pt",
-    # )
-    # inputs = inputs.to("cuda")
+    with torch.no_grad():
+        image_features = clip_model.encode_image(image_clip)
+        text_features = clip_model.encode_text(concept_tokens)
+        similarity = (image_features @ text_features.T).softmax(dim=-1)
+        best_idx = similarity[0].argmax().item()
+        best_match = concepts[best_idx]
+        confidence = similarity[0][best_idx].item()
 
-    ## INFO: Relies on torchvision and torch+cuda, but current torch+cu version conflicts with torchvision
-    #  generated_ids = model.generate(
-    #    **inputs,
-    #    max_new_tokens=128,
-    #    do_sample=True,
-    #    temperature=0.7,
-    #    top_p=0.9,
-    # )
-
-    ## Decode the entire output
-    # raw_output = processor.batch_decode(
-    #    generated_ids,
-    #    skip_special_tokens=True,
-    #    clean_up_tokenization_spaces=True,
-    # )
-
-    ## Extract the actual response (usually after the prompt)
-    # response = raw_output[0].split("Assistant:")[-1].strip()
-    #
-    # return response
+    # === Combine response ===
+    result = (
+        f"🧠 Prompt: {prompt}\n"
+        f"📸 Caption: {caption}\n"
+        f"🔎 Best CLIP Match: '{best_match}' ({confidence:.2f})"
+    )
+    return result
