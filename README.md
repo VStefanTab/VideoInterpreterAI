@@ -1,21 +1,12 @@
-# VideoInterpreterAI
-## Stefan's branch
+# Video interpreter using AI
 
-### Done:
+## Horia Branchu
 
-Interface: DONE
+This branch adds:
 
-### TODO:
-
-##### For real time:
-- Implement a model
-- Make it take as input the video
-- Parse the input from the prompt
-- feed it to the AI
-- get the output and feed it to the webUI
-
-##### For the Analytic part:
-- Use the same model(optional, but preferred)
-- After pressing record, save the video stream in a directory
-- Make the model analyze the stream
-- Generate an output and feed it to the webUI
+- Real-time scene description using `blip-image-captioning-base`
+- Visual question answering using `blip-vqa-base`
+- Gradio web interface for:
+  - Live webcam feed
+  - Continuous scene description
+  - User prompts with answers
