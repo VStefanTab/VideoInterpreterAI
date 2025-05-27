@@ -17,11 +17,11 @@ caption_model = BlipForConditionalGeneration.from_pretrained("Salesforce/blip-im
 vqa_processor = BlipProcessor.from_pretrained("Salesforce/blip-vqa-base")
 vqa_model = BlipForQuestionAnswering.from_pretrained("Salesforce/blip-vqa-base").to(device)
 
-# === Optional preprocessing for image/frame ===
+# === Preprocessing for image/frame ===
 def getFrame(image):
     return image
 
-# === Functionality 1: Continuous captioning ===
+# === Captioning ===
 def describeScene(image):
     with torch.no_grad():
         inputs = caption_processor(images=image, return_tensors="pt").to(device)
@@ -29,7 +29,7 @@ def describeScene(image):
         caption = caption_processor.decode(out[0], skip_special_tokens=True)
     return caption
 
-# === Functionality 2: Answer arbitrary prompts ===
+# === Answer prompts ===
 def answerPrompt(prompt, image):
     with torch.no_grad():
         if not prompt.strip().endswith("?"):
@@ -39,7 +39,7 @@ def answerPrompt(prompt, image):
         answer = vqa_processor.decode(out[0], skip_special_tokens=True)
     return answer
 
-# === Combined example ===
+# === Generate response ===
 def generateResponse(prompt, image):
     caption = describeScene(image)
     answer = answerPrompt(prompt, image)
