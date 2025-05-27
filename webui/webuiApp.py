@@ -173,7 +173,7 @@ with gr.Blocks(
         neutral_hue="slate",
         font=gr.themes.GoogleFont("Inter")
     ),
-    css=professional_css,
+    css=css,
     title="AI Video Interpreter"
 ) as demo:
     
