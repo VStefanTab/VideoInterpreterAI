@@ -1,55 +1,50 @@
 import torch
 from PIL import Image
-from transformers.models.blip import BlipProcessor, BlipForQuestionAnswering
-import clip  # Optional: can be replaced with open_clip for better quant support
+from transformers.models.blip import (
+    BlipProcessor,
+    BlipForConditionalGeneration,
+    BlipForQuestionAnswering
+)
 
 # === Device setup ===
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
-# === Load BLIP VQA Model ===
-blip_processor = BlipProcessor.from_pretrained("Salesforce/blip-vqa-base")
-blip_model = BlipForQuestionAnswering.from_pretrained("Salesforce/blip-vqa-base").to(device)
+# === Load BLIP captioning (auto description) model ===
+caption_processor = BlipProcessor.from_pretrained("Salesforce/blip-image-captioning-base")
+caption_model = BlipForConditionalGeneration.from_pretrained("Salesforce/blip-image-captioning-base").to(device)
 
-# === Load CLIP ===
-clip_model, clip_preprocess = clip.load("ViT-B/32", device=device)
+# === Load BLIP VQA (question answering) model ===
+vqa_processor = BlipProcessor.from_pretrained("Salesforce/blip-vqa-base")
+vqa_model = BlipForQuestionAnswering.from_pretrained("Salesforce/blip-vqa-base").to(device)
 
-# === Concept list for CLIP matching ===
-concepts = [
-    "a person",
-    "a fire",
-    "a dog",
-    "a car",
-    "a laptop",
-    "an empty street",
-    "a crowd",
-]
-concept_tokens = clip.tokenize(concepts).to(device)
-
-# === Optional preprocessing step ===
+# === Optional preprocessing for image/frame ===
 def getFrame(image):
-    # Modify as needed for your camera input
     return image
 
-# === Main function ===
-def generateResponse(prompt, image):
+# === Functionality 1: Continuous captioning ===
+def describeScene(image):
     with torch.no_grad():
-        # === Step 1: CLIP Matching (unchanged) ===
-        image_clip = clip_preprocess(image).unsqueeze(0).to(device)
-        image_features = clip_model.encode_image(image_clip)
-        text_features = clip_model.encode_text(concept_tokens)
-        similarity = (image_features @ text_features.T).softmax(dim=-1)
-        best_idx = similarity[0].argmax().item()
-        best_match = concepts[best_idx]
-        confidence = similarity[0][best_idx].item()
+        inputs = caption_processor(images=image, return_tensors="pt").to(device)
+        out = caption_model.generate(**inputs, max_new_tokens=50)
+        caption = caption_processor.decode(out[0], skip_special_tokens=True)
+    return caption
 
-        # === Step 2: Use BLIP VQA for actual question answering ===
-        inputs = blip_processor(image, prompt, return_tensors="pt").to(device)
-        out = blip_model.generate(**inputs)
-        vqa_answer = blip_processor.decode(out[0], skip_special_tokens=True)
+# === Functionality 2: Answer arbitrary prompts ===
+def answerPrompt(prompt, image):
+    with torch.no_grad():
+        if not prompt.strip().endswith("?"):
+            prompt = prompt.strip() + "?"
+        inputs = vqa_processor(image, prompt, return_tensors="pt").to(device)
+        out = vqa_model.generate(**inputs, max_new_tokens=50)
+        answer = vqa_processor.decode(out[0], skip_special_tokens=True)
+    return answer
 
-    result = (
+# === Combined example ===
+def generateResponse(prompt, image):
+    caption = describeScene(image)
+    answer = answerPrompt(prompt, image)
+    return (
+        f"📸 Scene description: {caption}\n"
         f"🧠 Prompt: {prompt}\n"
-        f"🔎 CLIP Match: '{best_match}' ({confidence:.2f})\n"
-        f"🤖 VQA Answer: {vqa_answer}"
+        f"🤖 Answer: {answer}"
     )
-    return result
