@@ -1,50 +1,48 @@
-from flask import Flask, request, jsonify
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 import requests
-from threading import Lock
 import uuid
+import threading
 
-app = Flask(__name__)
+app = FastAPI()
 responses = {}
-lock = Lock()
+lock = threading.Lock()
 
 
-@app.route("/request", methods=["POST"])
-def receive_response():
-    data = request.get_json()
+# POST endpoint to receive a response
+@app.post("/request")
+async def receive_response(request: Request):
+    data = await request.json()
     request_id = data.get("id")
     response_text = data.get("response")
 
     if not request_id or not response_text:
-        return "Invalid format", 400
+        return JSONResponse(status_code=400, content={"error": "Invalid format"})
 
     with lock:
         responses[request_id] = response_text
 
-    return "OK", 200
+    return {"status": "OK"}
 
 
-@app.route("/result", methods=["GET"])
-def get_response():
-    request_id = request.args.get("id")
-    if not request_id:
-        return jsonify({"response": None})
+# GET endpoint to return a stored response
+@app.get("/result")
+def get_response(id: str = None):  # type: ignore
+    if not id:
+        return {"response": None}
 
     with lock:
-        response = responses.pop(request_id, None)
+        response = responses.get(id)
 
-    return jsonify({"response": response})
+    return {"response": response}
 
 
+# Function to send requests to an external service
 def send_request(prompt, image64):
-    url = "http:/?"  # TODO: Replace with actual URL
+    url = "http://127.0.0.1:8080/end"  # TODO: Replace with actual URL
     request_id = str(uuid.uuid4())
 
-    payload = {
-        "id": request_id,
-        "prompt": prompt,
-        "image64": image64,
-        "flags": [],  # Add flags if needed
-    }
+    payload = {"id": request_id, "prompt": prompt, "image64": image64}
 
     try:
         requests.post(url, json=payload)

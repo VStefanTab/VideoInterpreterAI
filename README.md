@@ -2,6 +2,6 @@
 
 ## Alex's branch
 
-Currect model used: Efficient-Large-Model/VILA-7b
-
-Code need to be copied into container with nano_llm to work. Additional changes to get_model and generateResponse may need to be changed according to nano_llm package.
+Test folder contains an example used for testing webui's conn.py used in communication with container (simulating llama_cpp container).
+Container needs to be built before hand and started manually.
+Build using `docker build -t [container name] ./test` and then run using `docker run -p 8080:8080 [container name]`.

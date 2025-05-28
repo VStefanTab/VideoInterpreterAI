@@ -2,7 +2,7 @@ import base64
 from io import BytesIO
 import time
 import gradio as gr
-from conn import *
+from webui.conn import *
 
 
 def processRequest(image, prompt):
@@ -20,7 +20,7 @@ def processRequest(image, prompt):
         return "Failed to send request"
 
     # Poll for response
-    for _ in range(30): 
+    for _ in range(30):
         try:
             resp = requests.get(
                 "http://localhost:5000/result", params={"id": request_id}
