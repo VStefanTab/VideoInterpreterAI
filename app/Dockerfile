@@ -5,6 +5,6 @@ WORKDIR /opt/app
 COPY . /opt/app 
 RUN pip install --no-cache-dir -r requirements.txt
 
-EXPOSE 5050
+EXPOSE 8080
 # Filename is temporary. Replace with the actual filename
 CMD ["python3", "app.py"]

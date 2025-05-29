@@ -27,7 +27,7 @@ async def receive_response(request: Request):
 
 # GET endpoint to return a stored response
 @app.get("/result")
-def get_response(id: str = None):  # type: ignore
+def get_response(id: str = None):
     if not id:
         return {"response": None}
 
@@ -39,7 +39,7 @@ def get_response(id: str = None):  # type: ignore
 
 # Function to send requests to an external service
 def send_request(prompt, image64):
-    url = "http://127.0.0.1:8080/end"  # TODO: Replace with actual URL
+    url = "http://127.0.0.1:8080/end"
     request_id = str(uuid.uuid4())
 
     payload = {"id": request_id, "prompt": prompt, "image64": image64}
