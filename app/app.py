@@ -3,26 +3,31 @@ import requests
 from flask import Flask, request, jsonify
 from llama_cpp import Llama
 from llama_cpp.llama_chat_format import Llava15ChatHandler
+from huggingface_hub import hf_hub_download
 
 model_cache = {}
+model_path = None
 
 app = Flask(__name__)
 
 def download_model():
     model_name = "ggml-model-q4_k.gguf"
     repo_id = "mys/ggml_llava-v1.5-7b"
-    local_path = os.path.join(os.path.dirname(__file__), model_name)
+    local_dir = "models"
+    local_path = os.path.join(local_dir, model_name)
 
     if not os.path.exists(local_path):
         print(f"Downloading {model_name} from Huggingface...")
+        os.makedirs(local_dir, exist_ok=True)
         local_path = hf_hub_download(
-            repo_id=repo_id, filename=model_name, local_dir="models"
+            repo_id=repo_id, filename=model_name, local_dir=local_dir
         )
     return local_path
 
 
 def get_model(modelpath):
     if modelpath not in model_cache:
+        print("Initializing model...")
         chat_handler = Llava15ChatHandler.from_pretrained(
             repo_id="mys/ggml_llava-v1.5-7b",
             filename="*mmproj*",
@@ -35,17 +40,13 @@ def get_model(modelpath):
             logits_all=False,
             verbose=True,
         )
-
     return model_cache[modelpath]
 
 
 def generate_response(prompt, img64):
-    if not modelpath or modelpath == "None":
-        modelpath = download_model()
-    else:
-        modelpath = "models/" + modelpath
+    global model_path
 
-    llm = get_model(modelpath)
+    llm = get_model(model_path)
 
     output = llm.create_chat_completion(
         messages=[
@@ -85,7 +86,7 @@ def test_endpoint():
         print(f"Received image64: {image64[:30]}...")
         print(f"Request ID: {id}")
         
-        response = generate_response("models/ggml-model-q4_k.gguf", prompt, image64)
+        response = generate_response(prompt, image64)
 
         send_request(id, response)
         return jsonify({"status": "success", "id": id}), 200
@@ -110,8 +111,8 @@ def send_request(id, response):
         print(f"Error sending request: {e}")
         return None
     
+model_path = download_model()
+get_model(model_path)
 
 if __name__ == "__main__":
-    download_model()
-    get_model("models/ggml-model-q4_k.gguf")
-    app.run(host="0.0.0.0", port=8080, debug=True)
+    app.run(host="0.0.0.0", port=8080, debug=False)

@@ -1,6 +1,7 @@
 import base64
 from io import BytesIO
 import time
+from PIL import Image
 import gradio as gr
 from webui.conn import *
 
@@ -8,12 +9,15 @@ from webui.conn import *
 def processRequest(image, prompt):
     if image is None:
         return "No frame captured"
+    
+    image = image.resize((1344, 336), Image.Resampling.LANCZOS)
 
     # Convert image to base64
     buffered = BytesIO()
     image.save(buffered, format="JPEG")
     image_bytes = buffered.getvalue()
-    image64 = base64.b64encode(image_bytes).decode("utf-8")
+    base64_data = base64.b64encode(image_bytes).decode("utf-8")
+    image64 = f"data:image/png;base64,{base64_data}"
 
     request_id = send_request(prompt, image64)
     if request_id is None:
