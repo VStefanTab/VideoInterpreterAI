@@ -20,8 +20,8 @@ app = Flask(__name__)
 
 
 def download_model():
-    model_name = "obsidian-q6.gguf"
-    repo_id = "NousResearch/Obsidian-3B-V0.5-GGUF"
+    model_name = "ggml-model-q4_k.gguf"
+    repo_id = "mys/ggml_llava-v1.5-7b"
     local_dir = "models"
     local_path = os.path.join(local_dir, model_name)
 
@@ -38,14 +38,19 @@ def get_model(modelpath):
     if modelpath not in model_cache:
         print("Initializing model...")
         chat_handler = Llava15ChatHandler.from_pretrained(
-            repo_id="NousResearch/Obsidian-3B-V0.5-GGUF",
+            repo_id="mys/ggml_llava-v1.5-7b",
             filename="*mmproj*",
         )
         model_cache[modelpath] = Llama(
             model_path=modelpath,
             n_ctx=2048,
             chat_handler=chat_handler,
+            threads=6,
             n_gpu_layers=-1,
+            temperature=0.8,
+            top_k=40,
+            top_p=0.90,
+            max_tokens=128,
             logits_all=False,
             verbose=True,
         )
@@ -73,7 +78,7 @@ def generate_response(prompt, img64):
         messages=[
             {
                 "role": "system",
-                "content": "You are an assistant who perfectly describes images. Carefully analyze the image and provide a detailed and correct answer to the user's question.",
+                "content": "You are a vision-language assistant. Your task is to first understand the user's question, then carefully analyze the attached image and provide an accurate, relevant, and detailed answer. Always respond to the user's specific question — do not just describe the image.",
             },
             {
                 "role": "user",
@@ -81,9 +86,11 @@ def generate_response(prompt, img64):
                     {"type": "text", "text": prompt},
                     {"type": "image_url", "image_url": {"url": img64}},
                 ],
-            },
+            }
         ]
     )["choices"][0]["message"]["content"]
+    
+    print(f"Generated response: {result}")
 
     return result
 
@@ -109,13 +116,12 @@ def process_package():
 
         inference_queue.put((task_id, prompt, image64))
 
-        # Wait for result (polling, could use threading.Event instead)
         while True:
             with results_lock:
                 result = results.get(task_id)
             if result is not None:
                 break
-            time.sleep(0.1)  # prevent busy looping
+            time.sleep(0.1)
 
         send_request(id, result)
         return jsonify({"status": "success", "id": id}), 200
@@ -126,7 +132,7 @@ def process_package():
 
 
 def send_request(id, response):
-    url = "http://host.docker.internal:5000/request"
+    url = "http://localhost:5000/request"
     payload = {
         "id": id,
         "response": response,
