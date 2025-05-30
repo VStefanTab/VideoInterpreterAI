@@ -11,8 +11,8 @@ model_path = None
 app = Flask(__name__)
 
 def download_model():
-    model_name = "ggml-model-q4_k.gguf"
-    repo_id = "mys/ggml_llava-v1.5-7b"
+    model_name = "obsidian-q6.gguf"
+    repo_id = "NousResearch/Obsidian-3B-V0.5-GGUF"
     local_dir = "models"
     local_path = os.path.join(local_dir, model_name)
 
@@ -29,7 +29,7 @@ def get_model(modelpath):
     if modelpath not in model_cache:
         print("Initializing model...")
         chat_handler = Llava15ChatHandler.from_pretrained(
-            repo_id="mys/ggml_llava-v1.5-7b",
+            repo_id="NousResearch/Obsidian-3B-V0.5-GGUF",
             filename="*mmproj*",
         )
         model_cache[modelpath] = Llama(
