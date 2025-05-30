@@ -1,14 +1,23 @@
 import os
+from queue import Queue
+import threading
+import time
+import uuid
 import requests
 from flask import Flask, request, jsonify
 from llama_cpp import Llama
 from llama_cpp.llama_chat_format import Llava15ChatHandler
 from huggingface_hub import hf_hub_download
 
+inference_queue = Queue()
+results = {}
+results_lock = threading.Lock()
+
 model_cache = {}
 model_path = None
 
 app = Flask(__name__)
+
 
 def download_model():
     model_name = "obsidian-q6.gguf"
@@ -43,12 +52,24 @@ def get_model(modelpath):
     return model_cache[modelpath]
 
 
+def inference_worker():
+    while True:
+        task_id, prompt, img64 = inference_queue.get()
+        try:
+            result = generate_response(prompt, img64)
+        except Exception as e:
+            result = f"Error: {str(e)}"
+
+        with results_lock:
+            results[task_id] = result
+        inference_queue.task_done()
+
+
 def generate_response(prompt, img64):
     global model_path
-
     llm = get_model(model_path)
 
-    output = llm.create_chat_completion(
+    result = llm.create_chat_completion(
         messages=[
             {
                 "role": "system",
@@ -62,13 +83,13 @@ def generate_response(prompt, img64):
                 ],
             },
         ]
-    )
+    )["choices"][0]["message"]["content"]
 
-    return output["choices"][0]["message"]["content"]
+    return result
 
 
 @app.route("/end", methods=["POST"])
-def test_endpoint():
+def process_package():
     print("Received request at /end")
 
     try:
@@ -82,13 +103,21 @@ def test_endpoint():
             print("Missing one of: id, prompt, image64")
             return jsonify({"error": "Missing data fields"}), 400
 
-        print(f"Received prompt: {prompt}")
-        print(f"Received image64: {image64[:30]}...")
-        print(f"Request ID: {id}")
-        
-        response = generate_response(prompt, image64)
+        task_id = str(uuid.uuid4())
+        with results_lock:
+            results[task_id] = None
 
-        send_request(id, response)
+        inference_queue.put((task_id, prompt, image64))
+
+        # Wait for result (polling, could use threading.Event instead)
+        while True:
+            with results_lock:
+                result = results.get(task_id)
+            if result is not None:
+                break
+            time.sleep(0.1)  # prevent busy looping
+
+        send_request(id, result)
         return jsonify({"status": "success", "id": id}), 200
 
     except Exception as e:
@@ -110,9 +139,11 @@ def send_request(id, response):
     except requests.exceptions.RequestException as e:
         print(f"Error sending request: {e}")
         return None
-    
+
+
 model_path = download_model()
 get_model(model_path)
 
 if __name__ == "__main__":
+    threading.Thread(target=inference_worker, daemon=True).start()
     app.run(host="0.0.0.0", port=8080, debug=False)
