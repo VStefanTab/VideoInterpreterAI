@@ -9,4 +9,11 @@ WebUI and container are ran async, for that there are two scripts: `run-webui.sh
 
 ## Known issues
 
-When WebUI sends a request to container, it catches it, sends to llama_cpp, but at the end of inference (or after sending back response) causes severe lag and unresponsivness of system.
+Generated output sometimes may not consider question and only consider picture description. The longer application runs, the less intelligent responses are produced.
+
+### Project components
+
+- WebUI built with Gradio.
+- Docker container with Llama.cpp
+- FastAPI and Flask connectors for container communication
+- llava-v1.5-7b LLava model
