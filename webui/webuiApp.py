@@ -1,13 +1,5 @@
 import gradio as gr
-from app.scripts import *
-
-# === Unified function ===
-def processRequest(image, prompt):
-    frame = getFrame(image)
-    scene_description = describeScene(frame)  # continuous description
-    answer = answerPrompt(prompt, frame) if prompt.strip() else ""
-    
-    return scene_description, prompt, answer
+from app.scripts import processRequest, processVideoRequest
 
 css = """
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
@@ -164,7 +156,6 @@ css = """
     }
 }
 """
-
 # === Gradio interface ===
 with gr.Blocks(
     theme=gr.themes.Base(
@@ -197,6 +188,13 @@ with gr.Blocks(
                     elem_classes="webcam-container",
                     show_label=False,
                     container=False
+                )
+
+                video = gr.Video(
+                    sources="upload",
+                    format="mp4",
+                    visible=True,
+                    show_label=False
                 )
                 
                 gr.HTML('<div class="section-header" style="margin-top: 20px;">💬 Question</div>')
@@ -244,6 +242,11 @@ with gr.Blocks(
         outputs=[scene_box, prompt_display, answer_box],
         concurrency_limit=None,
         stream_every=1
+    )
+    video.change(
+        fn=processVideoRequest, 
+        inputs=[video, prompt_box], 
+        outputs=[scene_box, prompt_display, answer_box]
     )
 
 demo.launch(share=True)
