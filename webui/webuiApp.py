@@ -196,7 +196,10 @@ with gr.Blocks(
                     visible=True,
                     show_label=False
                 )
-                
+
+                # ✅ NEW BUTTON: interpret uploaded video
+                interpret_button = gr.Button("🎬 Interpret Uploaded Video", variant="primary")
+
                 gr.HTML('<div class="section-header" style="margin-top: 20px;">💬 Question</div>')
                 prompt_box = gr.Textbox(
                     placeholder="Ask about what you see in the video...",
@@ -246,6 +249,13 @@ with gr.Blocks(
     video.change(
         fn=processVideoRequest, 
         inputs=[video, prompt_box], 
+        outputs=[scene_box, prompt_display, answer_box]
+    )
+
+    # ✅ Trigger video interpretation on button click
+    interpret_button.click(
+        fn=processVideoRequest,
+        inputs=[video, prompt_box],
         outputs=[scene_box, prompt_display, answer_box]
     )
 

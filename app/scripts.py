@@ -130,7 +130,14 @@ def processVideoRequest(video_file, prompt):
 
     cap.release()
 
-    final_caption = "\n".join(captions) if captions else "No frames could be analyzed."
-    answer = answerPrompt(prompt, last_frame_img) if prompt.strip() and last_frame_img else ""
-    return final_caption, prompt, answer
+    # === Logic change here ===
+    if prompt.strip() and last_frame_img:
+        # Display the answer in the scene analysis box
+        answer = answerPrompt(prompt, last_frame_img)
+        return answer, prompt, ""
+    else:
+        # No question -> fallback to captioning summary
+        final_caption = "\n".join(captions) if captions else "No frames could be analyzed."
+        return final_caption, prompt, ""
+
 
