@@ -1,6 +1,9 @@
 import gradio as gr
 from app.scripts import processRequest, processVideoRequest
 
+def clear_outputs():
+    return "", "", ""
+
 css = """
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
@@ -156,10 +159,6 @@ css = """
     }
 }
 """
-<<<<<<< HEAD
-
-=======
->>>>>>> horia
 # === Gradio interface ===
 with gr.Blocks(
     theme=gr.themes.Base(
@@ -250,14 +249,23 @@ with gr.Blocks(
         concurrency_limit=None,
         stream_every=1
     )
+
     video.change(
-        fn=processVideoRequest, 
-        inputs=[video, prompt_box], 
+        fn=clear_outputs, 
+        inputs=[], 
+        outputs=[scene_box, prompt_display, answer_box]
+    ).then(
+        fn=processVideoRequest,
+        inputs=[video, prompt_box],
         outputs=[scene_box, prompt_display, answer_box]
     )
 
     # ✅ Trigger video interpretation on button click
     interpret_button.click(
+        fn=clear_outputs,
+        inputs=[],
+        outputs=[scene_box, prompt_display, answer_box]
+    ).then(
         fn=processVideoRequest,
         inputs=[video, prompt_box],
         outputs=[scene_box, prompt_display, answer_box]
