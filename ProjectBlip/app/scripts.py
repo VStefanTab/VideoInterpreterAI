@@ -26,11 +26,27 @@ if CUDA:
 
 # === Load BLIP captioning (auto description) model ===
 caption_processor = BlipProcessor.from_pretrained("Salesforce/blip-image-captioning-base")
+# This for float16
 caption_model = BlipForConditionalGeneration.from_pretrained("Salesforce/blip-image-captioning-base").to(device).eval()
+
+# This for 8-bit quantisation
+caption_model8 = BlipForConditionalGeneration.from_pretrained(
+    "Salesforce/blip-image-captioning-base",
+    quantization_config=bnb_cfg,
+    device_map="auto",
+).eval()
 
 # === Load BLIP VQA (question answering) model ===
 vqa_processor = BlipProcessor.from_pretrained("Salesforce/blip-vqa-base")
+# This for float16
 vqa_model = BlipForQuestionAnswering.from_pretrained("Salesforce/blip-vqa-base").to(device).eval()
+
+# This for 8-bit quantisation
+vqa_model8 = BlipForQuestionAnswering.from_pretrained(
+    "Salesforce/blip-vqa-base",
+    quantization_config=bnb_cfg,
+    device_map="auto",
+).eval()
 
 # === Preprocessing for image/frame ===
 def getFrame(src):
@@ -57,8 +73,6 @@ def getFrame(src):
         raise ValueError("Could not read frame from video!")
     frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
     return Image.fromarray(frame)
-
-    
 
 # === Captioning ===
 @torch.inference_mode()
