@@ -58,8 +58,8 @@ python run.py
   - Video analysis
   - Continuous scene description
   - User prompts with answers
-- Will use the GPU(If available) for faster processing
-- If bitsandbytes is available, the models can run in 8-bit precision to save memory while keeping almost full accuracy.(https://github.com/bitsandbytes-foundation/bitsandbytes)
+- Will use the GPU(If available) for faster processing and runs in float16 for precision instead of float32 to save memory and increased speed
+- If bitsandbytes is available, the models can run in 8-bit precision to save memory while keeping almost full accuracy(https://github.com/bitsandbytes-foundation/bitsandbytes). This is not set as default but can be done by changing inside the scripts.py file the model used in describeScene() and answerPrompt() from caption_model and vqa_model to caption_model8 and vqa_model8.
 
 ### Things to keep in mind: 
 - If you are using the Live webcam for real-time analysis and then inputing a video, the webcam will take priority so you will need to stop the webcam and then press a few times the *Interpret Uploaded Video* in order to get the answers
