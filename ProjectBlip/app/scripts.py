@@ -8,7 +8,6 @@ from transformers.models.blip import (
     BlipForQuestionAnswering
 )
 
-
 # === Device setup ===
 device = "cuda" if torch.cuda.is_available() else "cpu"
 CUDA = torch.cuda.is_available()
@@ -139,5 +138,3 @@ def processVideoRequest(video_file, prompt):
         # No question -> fallback to captioning summary
         final_caption = "\n".join(captions) if captions else "No frames could be analyzed."
         return final_caption, prompt, ""
-
-
