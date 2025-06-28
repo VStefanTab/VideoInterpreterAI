@@ -3,7 +3,7 @@ This project explores two simple approaches to video interpretation using modern
 
 ## Overview
 1. **BLIP Interpreter**<br>
-This version focuses on real-time performance. It uses CLIP to extract visual features from each frame and BLIP to generate short captions. The output is immediate and simple, offering basic scene descriptions.
+This version focuses on real-time performance. It uses BLIP to generate short captions. The output is immediate and simple, offering basic scene descriptions.
 
 2. **LLamaCPP Interpreter (Jetson Containers)**<br>
 This version aims for more detailed summaries. It runs LLamaCPP in a containerized setup on NVIDIA Jetson hardware. It processes video slower, but it can generate richer and more contextual descriptions by working with more information at once.
