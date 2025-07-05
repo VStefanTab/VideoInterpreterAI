@@ -5,7 +5,7 @@ import webui.conn as conn
 
 
 def run_gradio():
-    webui.demo.launch()
+    webui.demo.launch(share=True)
 
 
 def run_fastapi():
