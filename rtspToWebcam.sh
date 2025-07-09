@@ -39,7 +39,7 @@ echo "Streaming RTSP to virtual webcam /dev/video10..."
 echo "Press Ctrl+C to stop"
 
 # Start FFmpeg streaming
-ffmpeg -i "$RTSP_URL" -fflags nobuffer -flags low_delay -analyzeduration 10 -probesize 32000 -reorder_queue_size 4 -f v4l2 -pix_fmt yuv420p /dev/video10
+ffmpeg -r 25 -i "$RTSP_URL" -fflags nobuffer -flags low_delay -analyzeduration 10 -probesize 32000 -reorder_queue_size 4 -f v4l2 -pix_fmt yuv420p /dev/video10
 
 echo "Stream stopped. To remove the virtual device, run:"
 echo "sudo modprobe -r v4l2loopback"
