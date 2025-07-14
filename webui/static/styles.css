@@ -1,0 +1,20 @@
+body {
+    margin-left: 0px;
+  margin-right: 0px;
+  margin-bottom: 20px;
+  display: flex;
+  flex-direction: row;
+}
+
+.left_box {
+    width: 40%;
+    float: left;
+    margin-left: 24px;
+    margin-right: 48px;
+}
+
+.right_box {
+    width: 40%;
+    float: right;
+    margin-right: 24px;
+}

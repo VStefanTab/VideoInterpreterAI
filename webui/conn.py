@@ -1,14 +1,25 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
+from fastapi.templating import Jinja2Templates
 import requests
 import uuid
 import threading
 
 app = FastAPI()
+templates = Jinja2Templates(directory="templates")
 responses = {}
 lock = threading.Lock()
 
 
+@app.get("/")
+def home():
+    return templates.TemplateResponse("index.html", {"request": {}})
+
+@app.post("/")
+def connect_rtsp(request: Request):
+    # Hadle request for RTSP connection and return video stream
+    pass
+    
 # POST endpoint to receive a response
 @app.post("/request")
 async def receive_response(request: Request):

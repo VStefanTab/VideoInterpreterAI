@@ -1,6 +1,6 @@
 import threading
 import uvicorn
-import webui.webuiApp as webui
+import webui.rtspProcessor as webui
 import webui.conn as conn
 
 

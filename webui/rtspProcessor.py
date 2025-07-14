@@ -2,7 +2,7 @@ import base64
 from io import BytesIO
 import time
 from PIL import Image
-import gradio as gr
+import cv2
 from webui.conn import *
 
 
@@ -41,21 +41,23 @@ def processRequest(image, prompt):
     return "Timed out waiting for response"
 
 
-with gr.Blocks() as demo:
-    with gr.Row():
-        with gr.Column():
-            input_img = gr.Image(
-                label="Input", sources="webcam", streaming=True, type="pil"
-            )
-            input_prompt = gr.Textbox(label="Prompt", show_label=True)
-        with gr.Column():
-            output_prompt = gr.Textbox(label="Result")
+def process_RTSP(link):
+    cap = cv2.VideoCapture(link)
+    if not cap.isOpened():
+        raise RuntimeError("Cannot open RTSP stream")
 
-        input_img.stream(
-            fn=processRequest,
-            inputs=[input_img, input_prompt],
-            outputs=output_prompt,
-            time_limit=15,
-            stream_every=10,
-            concurrency_limit=None,
+    while True:
+        success, frame = cap.read()
+        if not success:
+            break
+
+        # Encode frame to JPEG
+        ret, buffer = cv2.imencode('.jpg', frame)
+        if not ret:
+            continue
+
+        frame_bytes = buffer.tobytes()
+        yield (
+            b'--frame\r\n'
+            b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n'
         )

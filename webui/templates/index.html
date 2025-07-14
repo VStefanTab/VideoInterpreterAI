@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../static/styles.css">
+    <title>Video Interpreter</title>
+</head>
+
+<body>
+    <div class="left_box">
+        <div class="connection_box">
+            <input type="text" name="rtsp_link" id="rtsp_link" placeholder="Enter RTSP link">
+            <button id="start_button">Connect</button>
+        </div>
+        <div class="video_prompt_box">
+            <img src="/video_feed" id="video_frame" hiddden/>
+            <input type="text" name="prompt" id="prompt" placeholder="Enter your prompt">
+            <button id="stream">Start Interpreter</button>
+        </div>
+    </div>
+    <div class="right_box">
+        <input type="text" name="response" id="response" disabled placeholder="Output will be displayed here">
+    </div>
+</body>
+
+</html>
