@@ -1,11 +1,6 @@
 import threading
 import uvicorn
-import webui.rtspProcessor as webui
 import webui.conn as conn
-
-
-def run_gradio():
-    webui.demo.launch(share=True)
 
 
 def run_fastapi():
@@ -15,5 +10,4 @@ def run_fastapi():
 if __name__ == "__main__":
     api_thread = threading.Thread(target=run_fastapi, daemon=True)
     api_thread.start()
-
-    run_gradio()
+    api_thread.join()

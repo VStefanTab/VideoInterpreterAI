@@ -1,25 +1,62 @@
-from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse
+from fastapi import FastAPI, Request, Response
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, StreamingResponse
+from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from pydantic import BaseModel
 import requests
 import uuid
 import threading
+from webui.processor import process_RTSP
 
 app = FastAPI()
-templates = Jinja2Templates(directory="templates")
+templates = Jinja2Templates(directory="webui/templates")
+app.mount("/static", StaticFiles(directory="webui/static"), name="static")
 responses = {}
 lock = threading.Lock()
+rtsp_link = None
 
 
-@app.get("/")
-def home():
-    return templates.TemplateResponse("index.html", {"request": {}})
+class LinkData(BaseModel):
+    link: str
+
+
+class Payload(BaseModel):
+    prompt: str
+    image64: str
+
+
+@app.get("/", response_class=HTMLResponse)
+def home(request: Request):
+    return templates.TemplateResponse(request=request, name="index.html")
+
 
 @app.post("/")
-def connect_rtsp(request: Request):
-    # Hadle request for RTSP connection and return video stream
-    pass
-    
+def set_rtsp(link_data: LinkData):
+    global rtsp_link
+    rtsp_link = link_data.link
+    return JSONResponse(content={"success": True, "redirect_url": "/interpreter"})
+
+
+@app.get("/interpreter", response_class=HTMLResponse)
+def interpreter_view(request: Request):
+    return templates.TemplateResponse(request=request, name="interpreterView.html")
+
+
+@app.post("/interpreter")
+def start_interpreter(data: Payload):
+    # Tempory. Show prompt and image64
+    print(f"Prompt: {data.prompt}")
+    print(f"Image64: {data.image64[:30]}...")
+    return {"status": "Interpreter started"}
+
+
+@app.get("/video_feed")
+async def video_feed():
+    return StreamingResponse(
+        process_RTSP(rtsp_link), media_type="multipart/x-mixed-replace; boundary=frame"
+    )
+
+
 # POST endpoint to receive a response
 @app.post("/request")
 async def receive_response(request: Request):
