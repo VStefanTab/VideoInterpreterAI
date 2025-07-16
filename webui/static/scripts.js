@@ -42,7 +42,7 @@ function StartInterpretor() {
 
     const Payload = {
         prompt: prompt,
-        frame: frameData
+        image64: frameData
     };
 
     if (Payload) {
@@ -55,7 +55,11 @@ function StartInterpretor() {
         })
             .then(response => response.json())
             .then(data => {
-                console.log("Interpreter started:", data);
+                if (data.success) {
+                    const response_field = document.getElementById("response");
+                    response_field.innerHTML = data.message;
+                    StartInterpretor();
+                }
             })
             .catch(error => {
                 console.error("Error starting interpreter:", error);

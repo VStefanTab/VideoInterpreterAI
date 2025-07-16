@@ -6,10 +6,30 @@ import cv2
 from webui.conn import *
 
 
-def processRequest(image, prompt):
-    if image is None:
+# Function to send requests to an external service
+def send_request(prompt, image64):
+    url = "http://127.0.0.1:8080/end"
+    request_id = str(uuid.uuid4())
+
+    payload = {"id": request_id, "prompt": prompt, "image64": image64}
+
+    try:
+        requests.post(url, json=payload)
+    except requests.exceptions.RequestException as e:
+        print(f"Error sending request: {e}")
+        return None
+
+    return request_id
+
+
+def processRequest(imageBytes, prompt):
+    if imageBytes is None:
         return "No frame captured"
-    
+
+    # Decode the image bytes
+    image = Image.open(BytesIO(base64.b64decode(imageBytes.split(",")[1])))
+
+    # Resize the image
     image = image.resize((1344, 336), Image.Resampling.LANCZOS)
 
     # Convert image to base64
@@ -52,12 +72,11 @@ def process_RTSP(link):
             break
 
         # Encode frame to JPEG
-        ret, buffer = cv2.imencode('.jpg', frame)
+        ret, buffer = cv2.imencode(".jpg", frame)
         if not ret:
             continue
 
         frame_bytes = buffer.tobytes()
         yield (
-            b'--frame\r\n'
-            b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n'
+            b"--frame\r\n" b"Content-Type: image/jpeg\r\n\r\n" + frame_bytes + b"\r\n"
         )

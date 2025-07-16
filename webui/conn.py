@@ -1,12 +1,12 @@
-from fastapi import FastAPI, Request, Response
-from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, StreamingResponse
+from fastapi import FastAPI, Request
+from fastapi.responses import HTMLResponse, JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 import requests
 import uuid
 import threading
-from webui.processor import process_RTSP
+from webui.processor import process_RTSP, processRequest
 
 app = FastAPI()
 templates = Jinja2Templates(directory="webui/templates")
@@ -44,11 +44,8 @@ def interpreter_view(request: Request):
 
 @app.post("/interpreter")
 def start_interpreter(data: Payload):
-    # Tempory. Show prompt and image64
-    print(f"Prompt: {data.prompt}")
-    print(f"Image64: {data.image64[:30]}...")
-    return {"status": "Interpreter started"}
-
+    response = processRequest(data.image64, data.prompt)
+    return JSONResponse(content={"success": True, "message": response})
 
 @app.get("/video_feed")
 async def video_feed():
@@ -83,19 +80,3 @@ def get_response(id: str = None):
         response = responses.get(id)
 
     return {"response": response}
-
-
-# Function to send requests to an external service
-def send_request(prompt, image64):
-    url = "http://127.0.0.1:8080/end"
-    request_id = str(uuid.uuid4())
-
-    payload = {"id": request_id, "prompt": prompt, "image64": image64}
-
-    try:
-        requests.post(url, json=payload)
-    except requests.exceptions.RequestException as e:
-        print(f"Error sending request: {e}")
-        return None
-
-    return request_id
