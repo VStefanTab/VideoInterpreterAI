@@ -1,9 +1,10 @@
 import base64
 from io import BytesIO
 import time
+import uuid
 from PIL import Image
-import cv2
-from webui.conn import *
+from fastapi import requests
+from webui.backend.conn import *
 
 
 # Function to send requests to an external service
@@ -60,23 +61,3 @@ def processRequest(imageBytes, prompt):
 
     return "Timed out waiting for response"
 
-
-def process_RTSP(link):
-    cap = cv2.VideoCapture(link)
-    if not cap.isOpened():
-        raise RuntimeError("Cannot open RTSP stream")
-
-    while True:
-        success, frame = cap.read()
-        if not success:
-            break
-
-        # Encode frame to JPEG
-        ret, buffer = cv2.imencode(".jpg", frame)
-        if not ret:
-            continue
-
-        frame_bytes = buffer.tobytes()
-        yield (
-            b"--frame\r\n" b"Content-Type: image/jpeg\r\n\r\n" + frame_bytes + b"\r\n"
-        )

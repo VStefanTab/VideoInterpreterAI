@@ -1,12 +1,10 @@
 from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse, JSONResponse, StreamingResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
-import requests
-import uuid
 import threading
-from webui.processor import process_RTSP, processRequest
+from webui.backend.processor import processRequest
 
 app = FastAPI()
 templates = Jinja2Templates(directory="webui/templates")
@@ -46,12 +44,6 @@ def interpreter_view(request: Request):
 def start_interpreter(data: Payload):
     response = processRequest(data.image64, data.prompt)
     return JSONResponse(content={"success": True, "message": response})
-
-@app.get("/video_feed")
-async def video_feed():
-    return StreamingResponse(
-        process_RTSP(rtsp_link), media_type="multipart/x-mixed-replace; boundary=frame"
-    )
 
 
 # POST endpoint to receive a response
