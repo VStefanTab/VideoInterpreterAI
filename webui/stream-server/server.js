@@ -1,10 +1,13 @@
 const express = require('express');
 const expressWs = require('express-ws');
+const cors = require('cors');
 const bodyParser = require('body-parser');
-const { proxy, scriptUrl } = require('rtsp-relay')(express());
 
 const app = express();
 expressWs(app);
+const { proxy, scriptUrl } = require('rtsp-relay')(app);
+
+app.use(cors());
 app.use(bodyParser.json());
 
 let rtspUrl = null;
@@ -15,6 +18,7 @@ app.post('/api/set-rtsp', (req, res) => {
   if (!rtspUrl) {
     return res.status(400).json({ error: 'RTSP URL required' });
   }
+  console.log(`RTSP URL set to: ${rtspUrl}`);
   res.json({ message: 'RTSP URL set' });
 });
 
@@ -26,18 +30,24 @@ app.ws('/api/stream', (ws, req) => {
   }
   proxy({
     url: rtspUrl,
-    verbose: false
+    verbose: true,
+    additionalFlags: ['-an']
   })(ws, req);
 });
 
-app.get('/script.js', (req, res) => {
-  res.type('text/javascript');
+app.get('/', (req, res) =>
   res.send(`
-    const canvas = document.getElementById('canvas');
-    const ws = new WebSocket('ws://' + location.hostname + ':2000/api/stream');
-    const player = new window.JSMpeg.Player(ws, { canvas: canvas });
-  `);
-});
+  <canvas id='canvas'></canvas>
+
+  <script src='${scriptUrl}'></script>
+  <script>
+    loadPlayer({
+      url: 'ws://' + location.host + '/api/stream',
+      canvas: document.getElementById('canvas')
+    });
+  </script>
+`),
+);
 
 const PORT = 2000;
 app.listen(PORT, () => console.log(`RTSP relay standby on http://localhost:${PORT}`));

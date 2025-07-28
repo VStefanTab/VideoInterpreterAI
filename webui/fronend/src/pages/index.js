@@ -1,4 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
+import { loadPlayer } from 'rtsp-relay/browser';  
 
 function LinkField({ onConnect }) {
   const inputRef = useRef();
@@ -19,22 +20,27 @@ function LinkField({ onConnect }) {
 }
 
 function VideoPlayer({ visible }) {
+  const canvasRef = useRef(null);
+
   useEffect(() => {
-    const script = document.createElement('script');
-    script.src = 'http://localhost:2000/script.js';
-    script.async = true;
-    document.body.appendChild(script);
-    return () => {
-      document.body.removeChild(script);
-    };
-  }, []);
+    if (!visible || !canvasRef.current) return;
+
+    loadPlayer({
+      url: 'ws://localhost:2000/api/stream',
+      canvas: canvasRef.current,
+    });
+  }, [visible]);
 
   if (!visible) return null;
 
   return (
     <div id="video">
       <h1>RTSP Stream</h1>
-      <canvas id="canvas" style={{ width: '640px', height: '480px', background: '#000' }} />
+      <canvas
+        ref={canvasRef}
+        id="canvas"
+        style={{ width: '640px', height: '480px'}}
+      />
     </div>
   );
 }
@@ -48,7 +54,7 @@ export default function HomePage() {
       return;
     }
 
-    fetch('/api/stream', {
+    fetch('http://localhost:2000/api/set-rtsp', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ rtspUrl })
