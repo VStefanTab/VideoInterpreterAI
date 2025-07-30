@@ -1,6 +1,6 @@
 import threading
 import uvicorn
-import webui.conn as conn
+import webui.backend.conn as conn
 
 
 def run_fastapi():

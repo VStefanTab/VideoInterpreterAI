@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { loadPlayer } from 'rtsp-relay/browser';  
+import { loadPlayer } from 'rtsp-relay/browser';
 
 function LinkField({ onConnect }) {
   const inputRef = useRef();
@@ -39,7 +39,7 @@ function VideoPlayer({ visible }) {
       <canvas
         ref={canvasRef}
         id="canvas"
-        style={{ width: '640px', height: '480px'}}
+        style={{ width: '640px', height: '480px' }}
       />
     </div>
   );
@@ -74,11 +74,50 @@ export default function HomePage() {
       });
   };
 
+  const startInterpreter = () => {
+    const img = document.getElementById('canvas');
+    const prompt = document.getElementById('input').value;
+    if (!img || !prompt) {
+      alert('Please ensure the canvas and prompt are set');
+      return;
+    }
+
+    const payload = {
+      prompt: prompt,
+      image64: img.toDataURL('image/jpeg').split(',')[1]
+    };
+
+    fetch('http://localhost:5000/interpreter', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success === true) {
+          document.getElementById('output').value = data.response;
+          startInterpreter();
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        alert('Failed to start interpreter');
+      });
+  }
+
   return (
-    <div>
-      <h1>RTSP Stream Viewer</h1>
-      <LinkField onConnect={handleConnect} />
-      <VideoPlayer visible={videoVisible} />
+    <div style={{ display: 'flex', flexDirection: 'column' }}>
+      <div style={{ float: 'left', width: '58%', marginLeft: '10px' }}>
+        <h1>RTSP Stream Viewer</h1>
+        <LinkField onConnect={handleConnect} />
+        <VideoPlayer visible={videoVisible} />
+        <input type='text' id='input' placeholder='Enter prompt here' hidden={!videoVisible} />
+        <button onClick={startInterpreter} hidden={!videoVisible}>Start interpretor</button>
+      </div>
+      <div style={{ float: 'right', width: '38%', marginLeft: '10px', marginRight: '10px' }} hidden={!videoVisible}>
+        <label htmlFor='output'>Response</label>
+        <textarea id='output' rows='10' cols='50' readOnly></textarea>
+      </div>
     </div>
   );
 }

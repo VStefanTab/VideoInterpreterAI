@@ -1,43 +1,28 @@
 from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse, JSONResponse
-from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 import threading
 from webui.backend.processor import processRequest
 
 app = FastAPI()
-templates = Jinja2Templates(directory="webui/templates")
-app.mount("/static", StaticFiles(directory="webui/static"), name="static")
+origins = ["http://localhost:3000"]
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 responses = {}
 lock = threading.Lock()
 rtsp_link = None
 
 
-class LinkData(BaseModel):
-    link: str
-
-
 class Payload(BaseModel):
     prompt: str
     image64: str
-
-
-@app.get("/", response_class=HTMLResponse)
-def home(request: Request):
-    return templates.TemplateResponse(request=request, name="index.html")
-
-
-@app.post("/")
-def set_rtsp(link_data: LinkData):
-    global rtsp_link
-    rtsp_link = link_data.link
-    return JSONResponse(content={"success": True, "redirect_url": "/interpreter"})
-
-
-@app.get("/interpreter", response_class=HTMLResponse)
-def interpreter_view(request: Request):
-    return templates.TemplateResponse(request=request, name="interpreterView.html")
 
 
 @app.post("/interpreter")

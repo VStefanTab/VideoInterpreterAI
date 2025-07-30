@@ -3,7 +3,7 @@ from io import BytesIO
 import time
 import uuid
 from PIL import Image
-from fastapi import requests
+import requests
 from webui.backend.conn import *
 
 
@@ -27,20 +27,20 @@ def processRequest(imageBytes, prompt):
     if imageBytes is None:
         return "No frame captured"
 
-    # Decode the image bytes
-    image = Image.open(BytesIO(base64.b64decode(imageBytes.split(",")[1])))
+    # # Decode the image bytes
+    # image = Image.open(BytesIO(base64.b64decode(imageBytes.split(",")[1])))
 
-    # Resize the image
-    image = image.resize((1344, 336), Image.Resampling.LANCZOS)
+    # # Resize the image
+    # image = image.resize((1344, 336), Image.Resampling.LANCZOS)
 
-    # Convert image to base64
-    buffered = BytesIO()
-    image.save(buffered, format="JPEG")
-    image_bytes = buffered.getvalue()
-    base64_data = base64.b64encode(image_bytes).decode("utf-8")
-    image64 = f"data:image/png;base64,{base64_data}"
+    # # Convert image to base64
+    # buffered = BytesIO()
+    # image.save(buffered, format="JPEG")
+    # image_bytes = buffered.getvalue()
+    # base64_data = base64.b64encode(image_bytes).decode("utf-8")
+    image64 = f"data:image/jpeg;base64,{imageBytes}"
 
-    request_id = send_request(prompt, image64)
+    request_id = send_request(prompt, imageBytes)
     if request_id is None:
         return "Failed to send request"
 
