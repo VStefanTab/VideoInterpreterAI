@@ -106,16 +106,17 @@ export default function HomePage() {
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column' }}>
-      <div style={{ float: 'left', width: '58%', marginLeft: '10px' }}>
+    <div style={{ display: 'flex', width: '100%' }}>
+      <div style={{ float: 'left', width: '60%', marginLeft: '10px' }}>
         <h1>RTSP Stream Viewer</h1>
         <LinkField onConnect={handleConnect} />
         <VideoPlayer visible={videoVisible} />
         <input type='text' id='input' placeholder='Enter prompt here' hidden={!videoVisible} />
         <button onClick={startInterpreter} hidden={!videoVisible}>Start interpretor</button>
       </div>
-      <div style={{ float: 'right', width: '38%', marginLeft: '10px', marginRight: '10px' }} hidden={!videoVisible}>
+      <div style={{ float: 'right', width: '32%', marginLeft: '10px', marginRight: '10px', marginTop: '30px' }} hidden={!videoVisible}>
         <label htmlFor='output'>Response</label>
+        <br/>
         <textarea id='output' rows='10' cols='50' readOnly></textarea>
       </div>
     </div>
