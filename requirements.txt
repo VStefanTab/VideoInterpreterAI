@@ -1,3 +1,4 @@
 packaging==24.2
 fastapi==0.115.14
 opencv-python==4.11.0.86
+uvicorn==0.35.0
