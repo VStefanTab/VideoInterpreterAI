@@ -2,7 +2,8 @@ import React, { useRef, useState, useEffect } from 'react';
 import { loadPlayer } from 'rtsp-relay/browser';
 
 
-const SERVER_ADDRESS = process.env.REACT_APP_SERVER_ADDRESS || 'localhost:2000';
+const SERVER_ADDRESS = process.env.NEXT_PUBLIC_SERVER_ADDRESS || 'localhost:2000';
+const BACKEND_ADDRESS = process.env.NEXT_PUBLIC_BACKEND_SERVER_ADDRESS || 'localhost:5000';
 
 function LinkField({ onConnect }) {
   const inputRef = useRef();
@@ -90,7 +91,7 @@ export default function HomePage() {
       image64: img.toDataURL('image/jpeg').split(',')[1]
     };
 
-    fetch('http://localhost:5000/interpreter', {
+    fetch(`http://${BACKEND_ADDRESS}/interpreter`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
