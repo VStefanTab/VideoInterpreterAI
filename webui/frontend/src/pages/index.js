@@ -1,6 +1,9 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { loadPlayer } from 'rtsp-relay/browser';
 
+
+const SERVER_ADDRESS = process.env.REACT_APP_SERVER_ADDRESS || 'localhost:2000';
+
 function LinkField({ onConnect }) {
   const inputRef = useRef();
 
@@ -26,7 +29,7 @@ function VideoPlayer({ visible }) {
     if (!visible || !canvasRef.current) return;
 
     loadPlayer({
-      url: 'ws://localhost:2000/api/stream',
+      url: `ws://${SERVER_ADDRESS}/api/stream`,
       canvas: canvasRef.current,
     });
   }, [visible]);
@@ -54,7 +57,7 @@ export default function HomePage() {
       return;
     }
 
-    fetch('http://localhost:2000/api/set-rtsp', {
+    fetch(`http://${SERVER_ADDRESS}/api/set-rtsp`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ rtspUrl })

@@ -50,4 +50,4 @@ app.get('/', (req, res) =>
 );
 
 const PORT = 2000;
-app.listen(PORT, () => console.log(`RTSP relay standby on http://localhost:${PORT}`));
+app.listen(PORT, '0.0.0.0', () => console.log(`RTSP relay standby on http://0.0.0.0:${PORT}`));
