@@ -51,6 +51,7 @@ function VideoPlayer({ visible }) {
 
 export default function HomePage() {
   const [videoVisible, setVideoVisible] = useState(false);
+  const [isInterpreting, setIsInterpreting] = useState(false);
 
   const handleConnect = (rtspUrl) => {
     if (!rtspUrl) {
@@ -79,11 +80,16 @@ export default function HomePage() {
   };
 
   const startInterpreter = async () => {
+    if (isInterpreting) return;
+    
+    setIsInterpreting(true);
+    
     try {
       const img = document.getElementById('canvas');
       const prompt = document.getElementById('input').value;
       if (!img || !prompt) {
         alert('Please ensure the canvas and prompt are set');
+        setIsInterpreting(false);
         return;
       }
 
@@ -102,17 +108,15 @@ export default function HomePage() {
 
       if (data.success === true) {
         document.getElementById('output').value = data.response;
-
-        // Wait for 1 second before making the next request
-        await new Promise(resolve => setTimeout(resolve, 1000));
-
-        startInterpreter();
       } else {
         throw new Error('Server returned success: false');
       }
     } catch (error) {
       console.error('Error:', error);
       alert('Failed to start interpreter');
+    } finally {
+      // Reset interpreting state after completion
+      setIsInterpreting(false);
     }
   }
 
