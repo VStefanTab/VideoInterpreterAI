@@ -38,7 +38,7 @@ def processRequest(imageBytes, prompt):
     # image.save(buffered, format="JPEG")
     # image_bytes = buffered.getvalue()
     # base64_data = base64.b64encode(image_bytes).decode("utf-8")
-    image64 = f"data:image/jpeg;base64,{imageBytes}"
+    imageBytes = f"data:image/jpeg;base64,{imageBytes}"
 
     request_id = send_request(prompt, imageBytes)
     if request_id is None:
