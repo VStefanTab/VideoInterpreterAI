@@ -6,7 +6,7 @@ import threading
 from webui.backend.processor import processRequest
 
 app = FastAPI()
-origins = ["http://localhost:3000"]
+origins = ["*"]
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,

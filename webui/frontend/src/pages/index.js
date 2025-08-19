@@ -78,35 +78,42 @@ export default function HomePage() {
       });
   };
 
-  const startInterpreter = () => {
-    const img = document.getElementById('canvas');
-    const prompt = document.getElementById('input').value;
-    if (!img || !prompt) {
-      alert('Please ensure the canvas and prompt are set');
-      return;
-    }
+  const startInterpreter = async () => {
+    try {
+      const img = document.getElementById('canvas');
+      const prompt = document.getElementById('input').value;
+      if (!img || !prompt) {
+        alert('Please ensure the canvas and prompt are set');
+        return;
+      }
 
-    const payload = {
-      prompt: prompt,
-      image64: img.toDataURL('image/jpeg').split(',')[1]
-    };
+      const payload = {
+        prompt: prompt,
+        image64: img.toDataURL('image/jpeg').split(',')[1]
+      };
 
-    fetch(`http://${BACKEND_ADDRESS}/interpreter`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    })
-      .then(response => response.json())
-      .then(data => {
-        if (data.success === true) {
-          document.getElementById('output').value = data.response;
-          startInterpreter();
-        }
-      })
-      .catch(error => {
-        console.error('Error:', error);
-        alert('Failed to start interpreter');
+      const response = await fetch(`http://${BACKEND_ADDRESS}/interpreter`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
       });
+
+      const data = await response.json();
+
+      if (data.success === true) {
+        document.getElementById('output').value = data.response;
+
+        // Wait for 1 second before making the next request
+        await new Promise(resolve => setTimeout(resolve, 1000));
+
+        startInterpreter();
+      } else {
+        throw new Error('Server returned success: false');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      alert('Failed to start interpreter');
+    }
   }
 
   return (
@@ -120,9 +127,9 @@ export default function HomePage() {
       </div>
       <div style={{ float: 'right', width: '32%', marginLeft: '10px', marginRight: '10px', marginTop: '30px' }} hidden={!videoVisible}>
         <label htmlFor='output'>Response</label>
-        <br/>
+        <br />
         <textarea id='output' rows='10' cols='50' readOnly></textarea>
       </div>
     </div>
-  );
+  )
 }
