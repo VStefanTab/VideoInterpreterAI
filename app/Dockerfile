@@ -16,7 +16,7 @@ RUN rm -rf /tmp/llama-cpp-python
 
 WORKDIR /opt/app
 COPY . /opt/app 
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir --index-url https://pypi.org/simple/ -r requirements.txt
 
 EXPOSE 8080
 
