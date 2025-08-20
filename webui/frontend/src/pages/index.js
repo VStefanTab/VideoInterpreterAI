@@ -98,6 +98,7 @@ export default function HomePage() {
         image64: img.toDataURL('image/jpeg').split(',')[1]
       };
 
+      // Send request to backend
       const response = await fetch(`http://${BACKEND_ADDRESS}/interpreter`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -107,13 +108,36 @@ export default function HomePage() {
       const data = await response.json();
 
       if (data.success === true) {
-        document.getElementById('output').value = data.response;
+        // Start polling for results
+        const requestId = data.request_id;
+        let result = null;
+        let attempts = 0;
+        const maxAttempts = 100; // Timeout after 100 attempts (10 seconds with 100ms interval)
+        
+        while (attempts < maxAttempts) {
+          const resultResponse = await fetch(`http://${BACKEND_ADDRESS}/result?id=${requestId}`);
+          const resultData = await resultResponse.json();
+          
+          if (resultData.response) {
+            result = resultData.response;
+            break;
+          }
+          
+          attempts++;
+          await new Promise(resolve => setTimeout(resolve, 100)); // Wait 100ms before next poll
+        }
+        
+        if (result) {
+          document.getElementById('output').value = result;
+        } else {
+          throw new Error('Timeout waiting for result');
+        }
       } else {
-        throw new Error('Server returned success: false');
+        throw new Error(data.error || 'Server returned success: false');
       }
     } catch (error) {
       console.error('Error:', error);
-      alert('Failed to start interpreter');
+      alert('Failed to start interpreter: ' + error.message);
     } finally {
       // Reset interpreting state after completion
       setIsInterpreting(false);
@@ -127,7 +151,7 @@ export default function HomePage() {
         <LinkField onConnect={handleConnect} />
         <VideoPlayer visible={videoVisible} />
         <input type='text' id='input' placeholder='Enter prompt here' hidden={!videoVisible} />
-        <button onClick={startInterpreter} hidden={!videoVisible}>Start interpretor</button>
+        <button onClick={startInterpreter} hidden={!videoVisible}>Start interpreter</button>
       </div>
       <div style={{ float: 'right', width: '32%', marginLeft: '10px', marginRight: '10px', marginTop: '30px' }} hidden={!videoVisible}>
         <label htmlFor='output'>Response</label>

@@ -27,8 +27,10 @@ class Payload(BaseModel):
 
 @app.post("/interpreter")
 def start_interpreter(data: Payload):
-    response = processRequest(data.image64, data.prompt)
-    return JSONResponse(content={"success": True, "message": response})
+    request_id, error = processRequest(data.image64, data.prompt)
+    if error:
+        return JSONResponse(content={"success": False, "error": error})
+    return JSONResponse(content={"success": True, "request_id": request_id})
 
 
 # POST endpoint to receive a response
