@@ -52,6 +52,28 @@ function VideoPlayer({ visible }) {
 export default function HomePage() {
   const [videoVisible, setVideoVisible] = useState(false);
   const [isInterpreting, setIsInterpreting] = useState(false);
+  const [prompt, setPrompt] = useState('');
+  const [debouncedPrompt, setDebouncedPrompt] = useState('');
+  const [lastProcessedPrompt, setLastProcessedPrompt] = useState('');
+
+  // Debounce effect for prompt changes
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedPrompt(prompt);
+    }, 500);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [prompt]);
+
+  // Automatically start interpreter when debounced prompt changes
+  useEffect(() => {
+    if (debouncedPrompt && videoVisible && debouncedPrompt !== lastProcessedPrompt) {
+      setLastProcessedPrompt(debouncedPrompt);
+      startInterpreter(debouncedPrompt);
+    }
+  }, [debouncedPrompt, videoVisible, lastProcessedPrompt]);
 
   const handleConnect = (rtspUrl) => {
     if (!rtspUrl) {
@@ -79,16 +101,15 @@ export default function HomePage() {
       });
   };
 
-  const startInterpreter = async () => {
+  const startInterpreter = async (prompt) => {
     if (isInterpreting) return;
     
     setIsInterpreting(true);
     
     try {
       const img = document.getElementById('canvas');
-      const prompt = document.getElementById('input').value;
-      if (!img || !prompt) {
-        alert('Please ensure the canvas and prompt are set');
+      if (!img) {
+        alert('Please ensure the canvas is set');
         setIsInterpreting(false);
         return;
       }
@@ -124,7 +145,7 @@ export default function HomePage() {
           }
           
           attempts++;
-          await new Promise(resolve => setTimeout(resolve, 100)); // Wait 100ms before next poll
+          await new Promise(resolve => setTimeout(resolve, 100));
         }
         
         if (result) {
@@ -150,8 +171,13 @@ export default function HomePage() {
         <h1>RTSP Stream Viewer</h1>
         <LinkField onConnect={handleConnect} />
         <VideoPlayer visible={videoVisible} />
-        <input type='text' id='input' placeholder='Enter prompt here' hidden={!videoVisible} />
-        <button onClick={startInterpreter} hidden={!videoVisible}>Start interpreter</button>
+        <input 
+          type='text' 
+          value={prompt}
+          onChange={(e) => setPrompt(e.target.value)}
+          placeholder='Enter prompt here' 
+          hidden={!videoVisible} 
+        />
       </div>
       <div style={{ float: 'right', width: '32%', marginLeft: '10px', marginRight: '10px', marginTop: '30px' }} hidden={!videoVisible}>
         <label htmlFor='output'>Response</label>
