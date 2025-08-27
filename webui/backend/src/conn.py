@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 import threading
-from webui.backend.processor import processRequest
+from src.processor import processRequest
 
 app = FastAPI()
 origins = ["*"]

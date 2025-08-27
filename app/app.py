@@ -132,7 +132,7 @@ def process_package():
 
 
 def send_request(id, response):
-    url = "http://localhost:5000/request"
+    url = "http://processing:5000/request"
     payload = {
         "id": id,
         "response": response,

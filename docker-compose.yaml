@@ -1,0 +1,33 @@
+services:
+  frontend:
+    build: ./webui/frontend
+    environment:
+      - NEXT_PUBLIC_SERVER_ADDRESS=${HOST_IP}:2000
+      - NEXT_PUBLIC_BACKEND_SERVER_ADDRESS=${HOST_IP}:5000
+    ports: 
+      - "3000:3000"
+    networks:
+      - my-network
+
+  stream-server:
+    build: ./webui/stream-server
+    ports:
+      - "2000:2000"
+    networks:
+      - my-network
+
+  processing:
+    build: ./webui/backend
+    ports:
+      - "5000:5000"
+    networks:
+      - my-network
+
+llama:
+  build: ./app
+  networks:
+    - my-network
+
+networks:
+  my-network:
+    external: false

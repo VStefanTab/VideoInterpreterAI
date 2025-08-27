@@ -2,8 +2,8 @@ import React, { useRef, useState, useEffect } from 'react';
 import { loadPlayer } from 'rtsp-relay/browser';
 
 
-const SERVER_ADDRESS = process.env.NEXT_PUBLIC_SERVER_ADDRESS || 'localhost:2000';
-const BACKEND_ADDRESS = process.env.NEXT_PUBLIC_BACKEND_SERVER_ADDRESS || 'localhost:5000';
+const SERVER_ADDRESS = process.env.NEXT_PUBLIC_SERVER_ADDRESS || 'stream-server:2000';
+const BACKEND_ADDRESS = process.env.NEXT_PUBLIC_BACKEND_SERVER_ADDRESS || 'processing:5000';
 
 function LinkField({ onConnect }) {
   const inputRef = useRef();
