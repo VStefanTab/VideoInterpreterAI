@@ -103,9 +103,9 @@ export default function HomePage() {
 
   const startInterpreter = async (prompt) => {
     if (isInterpreting) return;
-    
+
     setIsInterpreting(true);
-    
+
     try {
       const img = document.getElementById('canvas');
       if (!img) {
@@ -113,6 +113,17 @@ export default function HomePage() {
         setIsInterpreting(false);
         return;
       }
+
+      // Create a temporary canvas for resizing
+      const tempCanvas = document.createElement('canvas');
+      const ctx = tempCanvas.getContext('2d');
+
+      const scaleFactor = 0.5;
+      tempCanvas.width = img.width * scaleFactor;
+      tempCanvas.height = img.height * scaleFactor;
+
+      // Draw the image scaled down
+      ctx.drawImage(img, 0, 0, tempCanvas.width, tempCanvas.height);
 
       const payload = {
         prompt: prompt,
@@ -134,20 +145,20 @@ export default function HomePage() {
         let result = null;
         let attempts = 0;
         const maxAttempts = 100; // Timeout after 100 attempts (10 seconds with 100ms interval)
-        
+
         while (attempts < maxAttempts) {
           const resultResponse = await fetch(`http://${BACKEND_ADDRESS}/result?id=${requestId}`);
           const resultData = await resultResponse.json();
-          
+
           if (resultData.response) {
             result = resultData.response;
             break;
           }
-          
+
           attempts++;
           await new Promise(resolve => setTimeout(resolve, 100));
         }
-        
+
         if (result) {
           document.getElementById('output').value = result;
         } else {
@@ -171,12 +182,12 @@ export default function HomePage() {
         <h1>RTSP Stream Viewer</h1>
         <LinkField onConnect={handleConnect} />
         <VideoPlayer visible={videoVisible} />
-        <input 
-          type='text' 
+        <input
+          type='text'
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
-          placeholder='Enter prompt here' 
-          hidden={!videoVisible} 
+          placeholder='Enter prompt here'
+          hidden={!videoVisible}
         />
       </div>
       <div style={{ float: 'right', width: '32%', marginLeft: '10px', marginRight: '10px', marginTop: '30px' }} hidden={!videoVisible}>
