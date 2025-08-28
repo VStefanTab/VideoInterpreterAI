@@ -23,10 +23,10 @@ services:
     networks:
       - my-network
 
-llama:
-  build: ./app
-  networks:
-    - my-network
+  llama:
+    build: ./app
+    networks:
+      - my-network
 
 networks:
   my-network:
