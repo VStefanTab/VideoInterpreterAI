@@ -1,4 +1,6 @@
 import os
+import base64
+import re
 from queue import Queue
 import threading
 import time
@@ -9,6 +11,8 @@ from flask_cors import CORS
 from llama_cpp import Llama
 from llama_cpp.llama_chat_format import Llava15ChatHandler
 from huggingface_hub import hf_hub_download
+from PIL import Image
+from io import BytesIO
 
 inference_queue = Queue()
 results = {}
@@ -45,18 +49,48 @@ def get_model(modelpath):
         )
         model_cache[modelpath] = Llama(
             model_path=modelpath,
-            n_ctx=2048,
+            n_ctx=3072,
             chat_handler=chat_handler,
-            threads=6,
+            n_threads=6, 
             n_gpu_layers=-1,
-            temperature=0.8,
-            top_k=40,
-            top_p=0.90,
-            max_tokens=128,
-            logits_all=False,
             verbose=True,
         )
     return model_cache[modelpath]
+
+
+def process_image(img64):
+    try:
+        # Remove data URL prefix if present
+        if img64.startswith('data:'):
+            img64 = img64.split(',', 1)[1]
+        
+        # Decode base64
+        image_data = base64.b64decode(img64)
+        
+        # Validate it's a proper image
+        image = Image.open(BytesIO(image_data))
+        
+        # Convert to RGB if necessary
+        if image.mode != 'RGB':
+            image = image.convert('RGB')
+        
+        # Resize if too large (LLaVA works better with smaller images)
+        max_size = 512
+        if max(image.size) > max_size:
+            ratio = max_size / max(image.size)
+            new_size = tuple(int(dim * ratio) for dim in image.size)
+            image = image.resize(new_size, Image.Resampling.LANCZOS)
+        
+        # Convert back to base64
+        buffer = BytesIO()
+        image.save(buffer, format='JPEG', quality=85)
+        processed_b64 = base64.b64encode(buffer.getvalue()).decode()
+        
+        return f"data:image/jpeg;base64,{processed_b64}"
+        
+    except Exception as e:
+        print(f"Error processing image: {e}")
+        return None
 
 
 def inference_worker():
@@ -66,6 +100,7 @@ def inference_worker():
             result = generate_response(prompt, img64)
         except Exception as e:
             result = f"Error: {str(e)}"
+            print(f"Inference error: {e}")
 
         with results_lock:
             results[task_id] = result
@@ -74,27 +109,52 @@ def inference_worker():
 
 def generate_response(prompt, img64):
     global model_path
+    
+    # Process the image first
+    processed_image = process_image(img64)
+    if not processed_image:
+        return "Error: Could not process the provided image."
+    
     llm = get_model(model_path)
 
-    result = llm.create_chat_completion(
-        messages=[
-            {
-                "role": "system",
-                "content": "You are an expert vision-language AI assistant specialized in analyzing images and answering questions about them. Your primary goal is to provide accurate, concise, and helpful responses to the user's specific questions by combining visual analysis with contextual understanding. Follow these guidelines: 1) Focus on answering the user's exact question - avoid generic image descriptions unless specifically requested. 2) If the image is unclear or doesn't contain information relevant to the question, clearly state this limitation. 3) Provide specific details from the image when relevant to the question, but keep explanations concise. 4) If multiple interpretations are possible, briefly mention alternatives. 5) If you cannot answer the question due to image quality or content limitations, explain why honestly. 6) Structure your response logically with clear, direct language.",
-            },
-            {
-                "role": "user",
-                "content": [
-                    {"type": "text", "text": prompt},
-                    {"type": "image_url", "image_url": {"url": img64}},
-                ],
-            },
-        ]
-    )["choices"][0]["message"]["content"]
+    try:
+        # Use a more specific system prompt for LLaVA
+        system_prompt = """You are an AI assistant that can see and analyze images. When given an image and a question, provide a clear, accurate, and helpful response based on what you observe in the image. Be specific and descriptive in your analysis."""
+        
+        # Create the chat completion with proper parameters
+        result = llm.create_chat_completion(
+            messages=[
+                {
+                    "role": "system",
+                    "content": system_prompt,
+                },
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": prompt},
+                        {"type": "image_url", "image_url": {"url": processed_image}},
+                    ],
+                },
+            ],
+            temperature=0.7,
+            top_k=40,
+            top_p=0.9,
+            max_tokens=512,  # Increased max tokens
+            stop=["\n\n\n", "###"],  # Add stop sequences to prevent repetition
+            repeat_penalty=1.1,  # Prevent repetitive outputs
+        )
+        
+        response_text = result["choices"][0]["message"]["content"].strip()
+        
+        # Clean up common issues
+        if not response_text or response_text.count("#") > len(response_text) * 0.5:
+            return "I'm having trouble processing this image. Could you please try with a different image or rephrase your question?"
+        
+        return response_text
 
-    print(f"Generated response: {result}")
-
-    return result
+    except Exception as e:
+        print(f"Error in generate_response: {e}")
+        return f"Error generating response: {str(e)}"
 
 
 @app.route("/end", methods=["POST"])
@@ -112,18 +172,30 @@ def process_package():
             print("Missing one of: id, prompt, image64")
             return jsonify({"error": "Missing data fields"}), 400
 
+        print(f"Processing request - ID: {id}, Prompt length: {len(prompt)}, Image length: {len(image64)}")
+
         task_id = str(uuid.uuid4())
         with results_lock:
             results[task_id] = None
 
         inference_queue.put((task_id, prompt, image64))
 
+        # Wait for result with timeout
+        timeout = 120  # 2 minutes timeout
+        start_time = time.time()
+        
         while True:
             with results_lock:
                 result = results.get(task_id)
             if result is not None:
                 break
+            if time.time() - start_time > timeout:
+                return jsonify({"error": "Request timeout"}), 500
             time.sleep(0.1)
+
+        # Clean up result from memory
+        with results_lock:
+            del results[task_id]
 
         send_request(id, result)
         return jsonify({"status": "success", "id": id}), 200
@@ -141,17 +213,33 @@ def send_request(id, response):
     }
 
     try:
-        response = requests.post(url, json=payload)
-        response.raise_for_status()
-        return response.json()
+        response_req = requests.post(url, json=payload, timeout=30)
+        response_req.raise_for_status()
+        return response_req.json()
     except requests.exceptions.RequestException as e:
         print(f"Error sending request: {e}")
         return None
 
 
-model_path = download_model()
-get_model(model_path)
+# Add health check endpoint
+@app.route("/health", methods=["GET"])
+def health_check():
+    return jsonify({"status": "healthy", "model_loaded": model_path is not None}), 200
+
 
 if __name__ == "__main__":
-    threading.Thread(target=inference_worker, daemon=True).start()
-    app.run(host="0.0.0.0", port=8080, debug=False)
+    try:
+        print("Downloading and initializing model...")
+        model_path = download_model()
+        get_model(model_path)  # Pre-load the model
+        print("Model loaded successfully!")
+        
+        # Start the inference worker
+        threading.Thread(target=inference_worker, daemon=True).start()
+        
+        print("Starting server...")
+        app.run(host="0.0.0.0", port=8080, debug=False)
+        
+    except Exception as e:
+        print(f"Failed to start server: {e}")
+        exit(1)
