@@ -8,6 +8,9 @@ services:
       - "3000:3000"
     networks:
       - my-network
+    depends_on:
+      - stream-server
+      - processing
 
   stream-server:
     build: ./webui/stream-server
@@ -22,11 +25,24 @@ services:
       - "5000:5000"
     networks:
       - my-network
+    depends_on:
+      - llama
 
   llama:
     build: ./app
+    runtime: nvidia
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=all
     networks:
       - my-network
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
 
 networks:
   my-network:

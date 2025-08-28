@@ -5,6 +5,7 @@ import time
 import uuid
 import requests
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 from llama_cpp import Llama
 from llama_cpp.llama_chat_format import Llava15ChatHandler
 from huggingface_hub import hf_hub_download
@@ -17,6 +18,7 @@ model_cache = {}
 model_path = None
 
 app = Flask(__name__)
+CORS(app)
 
 
 def download_model():

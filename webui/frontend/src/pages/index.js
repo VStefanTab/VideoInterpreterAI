@@ -60,7 +60,7 @@ export default function HomePage() {
   useEffect(() => {
     const handler = setTimeout(() => {
       setDebouncedPrompt(prompt);
-    }, 500);
+    }, 1000);
 
     return () => {
       clearTimeout(handler);
@@ -116,7 +116,7 @@ export default function HomePage() {
 
       const payload = {
         prompt: prompt,
-        image64: img.toDataURL('image/png').split(',')[1]
+        image64: img.toDataURL('image/png') 
       };
 
       // Send request to backend

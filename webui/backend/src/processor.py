@@ -24,8 +24,9 @@ def send_request(prompt, image64):
 def processRequest(imageBytes, prompt):
     if imageBytes is None:
         return None, "No frame captured"
-
-    imageBytes = f"data:image/png;base64,{imageBytes}"
+    
+    if imageBytes == "<__media__>":
+        return None, "No frame captured, media placeholder detected"
 
     request_id = send_request(prompt, imageBytes)
     if request_id is None:
