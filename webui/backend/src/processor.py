@@ -1,5 +1,4 @@
 from io import BytesIO
-import time
 import uuid
 from PIL import Image
 import requests
@@ -26,7 +25,7 @@ def processRequest(imageBytes, prompt):
     if imageBytes is None:
         return None, "No frame captured"
 
-    imageBytes = f"data:image/jpeg;base64,{imageBytes}"
+    imageBytes = f"data:image/png;base64,{imageBytes}"
 
     request_id = send_request(prompt, imageBytes)
     if request_id is None:

@@ -30,8 +30,9 @@ app.ws('/api/stream', (ws, req) => {
   }
   proxy({
     url: rtspUrl,
+    transport: "tcp",
     verbose: true,
-    additionalFlags: ['-an', '-fflags', 'nobuffer']
+    additionalFlags: ['-an', '-fflags', 'nobuffer', '-s', '1280x720']
   })(ws, req);
 });
 

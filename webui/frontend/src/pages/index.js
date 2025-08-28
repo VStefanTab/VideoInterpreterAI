@@ -116,7 +116,7 @@ export default function HomePage() {
 
       const payload = {
         prompt: prompt,
-        image64: img.toDataURL('image/jpeg').split(',')[1]
+        image64: img.toDataURL('image/png').split(',')[1]
       };
 
       // Send request to backend
