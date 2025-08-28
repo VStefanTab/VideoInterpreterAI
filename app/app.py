@@ -9,8 +9,6 @@ from flask_cors import CORS
 from llama_cpp import Llama
 from llama_cpp.llama_chat_format import Llava15ChatHandler
 from huggingface_hub import hf_hub_download
-from PIL import Image
-from io import BytesIO
 
 inference_queue = Queue()
 results = {}
