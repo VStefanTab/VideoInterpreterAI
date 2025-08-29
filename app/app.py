@@ -4,6 +4,9 @@ import threading
 import time
 import uuid
 import requests
+from PIL import Image
+import base64
+import tempfile
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from llama_cpp import Llama
@@ -76,6 +79,53 @@ def generate_response(prompt, img64):
     global model_path
     llm = get_model(model_path)
 
+    # Clean and extract base64 data
+    img64 = img64.strip().strip('"').strip("'")
+
+    # Remove data URL prefix if present
+    if img64.startswith("data:"):
+        # Find the comma that separates metadata from base64 data
+        comma_index = img64.find(",")
+        if comma_index != -1:
+            img64 = img64[comma_index + 1 :]
+
+    # Add padding if missing
+    padding = len(img64) % 4
+    if padding:
+        img64 += "=" * (4 - padding)
+
+    try:
+        image_bytes = base64.b64decode(img64)
+    except Exception as e:
+        print(f"[DEBUG] Base64 decode failed: {e}")
+        return f"Error: Failed to decode base64 image data"
+
+    # Create temporary file with appropriate extension based on image type
+    # Try to detect image format from the first few bytes
+    image_format = "jpg"  # default
+    if image_bytes.startswith(b"\x89PNG"):
+        image_format = "png"
+    elif image_bytes.startswith(b"GIF"):
+        image_format = "gif"
+    elif image_bytes.startswith(b"\xff\xd8\xff"):
+        image_format = "jpg"
+
+    with tempfile.NamedTemporaryFile(suffix=f".{image_format}", delete=False) as f:
+        f.write(image_bytes)
+        image_path = f.name
+
+    # Debug: Verify with Pillow
+    try:
+        with Image.open(image_path) as img:
+            img.verify()
+        print(f"[DEBUG] Image verified OK at {image_path} (format: {image_format})")
+    except Exception as e:
+        print(f"[DEBUG] Invalid image saved at {image_path}: {e}")
+        # Try to get more info about the file
+        print(f"[DEBUG] File size: {os.path.getsize(image_path)} bytes")
+        print(f"[DEBUG] First 20 bytes: {image_bytes[:20]}")
+        return f"Error: Invalid image format - {e}"
+
     result = llm.create_chat_completion(
         messages=[
             {
@@ -88,10 +138,10 @@ def generate_response(prompt, img64):
                     {"type": "text", "text": prompt},
                     {"type": "image_url", "image_url": {"url": img64}},
                 ],
-            }
+            },
         ]
     )["choices"][0]["message"]["content"]
-    
+
     print(f"Generated response: {result}")
 
     return result
