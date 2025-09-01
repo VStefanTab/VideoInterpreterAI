@@ -1,3 +1,4 @@
 Flask
 flask-cors
 pillow
+hf-xet

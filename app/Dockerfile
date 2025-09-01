@@ -5,7 +5,7 @@ ARG CUDA_ARCH=87
 
 RUN FORCE_CMAKE=1 \
     CMAKE_ARGS="-DGGML_CUDA=ON -DLLAVA_BUILD=ON -DCMAKE_CUDA_ARCHITECTURES=${CUDA_ARCH}" \
-    pip install llama-cpp-python==0.3.10 --force-reinstall --upgrade --index-url ${PIP_URL}
+    pip install llama-cpp-python==0.3.9 --force-reinstall --upgrade --index-url ${PIP_URL}
 
 WORKDIR /
 RUN rm -rf /tmp/llama-cpp-python
