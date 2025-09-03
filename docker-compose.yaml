@@ -38,10 +38,10 @@ services:
       - NVIDIA_DRIVER_CAPABILITIES=all
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
-      interval: 20s
-      timeout: 20s
+      interval: 10s
+      timeout: 10s
       retries: 10
-      start_period: 30s
+      start_period: 60s
     networks:
       - my-network
     deploy:
