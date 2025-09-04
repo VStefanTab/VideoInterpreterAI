@@ -14,8 +14,7 @@ Replace **localhost** with public IP adress of the machine this application will
 
 You can run script `start-app.sh` with `sudo` previleges to start the Docker compose application. User entrypoint will be at the adress set in `.env` file and port **3000**.
 
-The **Llama container** may take longer to start, so connect only when it's ready. You can check it's status by executing `sudo docker compose logs llama`, which will display logs from that container.
-Wait until it says `Running on http://someaddress:8080`, then you're good to go.
+*Be aware* that the application is quite large. To run it without problem, you might need **20GB+** of space. This is due to complex dependencies of the llama container.
 
 ## Stop the application
 
