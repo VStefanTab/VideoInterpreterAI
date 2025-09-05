@@ -127,7 +127,7 @@ export default function HomePage() {
 
       const payload = {
         prompt: prompt,
-        image64: tempCanvas.toDataURL('image/jpeg', 0.75) 
+        image64: tempCanvas.toDataURL('image/jpeg', 0.95) 
       };
 
       // Send request to backend
