@@ -27,8 +27,15 @@ def processRequest(imageBytes, prompt):
         return None, "No frame captured"
 
     try:
+        # Remove data URI prefix if present
+        if imageBytes.startswith("data:image"):
+            imageBytes = imageBytes.split(",")[1]
+
+        # Convert base64 string to bytes
+        image_data = base64.b64decode(imageBytes)
+
         # Attempt to open and validate image
-        image = Image.open(BytesIO(imageBytes))
+        image = Image.open(BytesIO(image_data))
 
         # Calculate new dimensions while maintaining aspect ratio
         max_size = 800
@@ -44,9 +51,9 @@ def processRequest(imageBytes, prompt):
         image.save(buffered, format=image.format or "JPEG")
         image_base64 = base64.b64encode(buffered.getvalue()).decode("utf-8")
 
-        # Add data URI prefix if not present
-        if not image_base64.startswith("data:image"):
-            image_base64 = f"data:image/jpeg;base64,{image_base64}"
+        # Add data URI prefix
+        image_base64 = f"data:image/jpeg;base64,{image_base64}"
+
     except Exception as e:
         return None, f"Error processing image: {str(e)}"
 
