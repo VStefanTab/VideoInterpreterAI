@@ -39,17 +39,28 @@ def processRequest(imageBytes, prompt):
         # Attempt to open and validate image
         image = Image.open(BytesIO(image_data))
 
-        # Calculate new dimensions while maintaining aspect ratio
         max_size = 800
         if image.width > max_size or image.height > max_size:
             ratio = min(max_size / image.width, max_size / image.height)
             new_size = (int(image.width * ratio), int(image.height * ratio))
+            # Using LANCZOS for high-quality resampling
             image = image.resize(new_size, Image.Resampling.LANCZOS)
+        
+        # Ensure proper image mode for JPEG (RGB)
+        if image.mode in ('RGBA', 'LA', 'P'):
+            # Create a white background for transparency
+            background = Image.new('RGB', image.size, (255, 255, 255))
+            if image.mode == 'P':
+                image = image.convert('RGBA')
+            background.paste(image, mask=image.split()[-1] if image.mode == 'RGBA' else None)
+            image = background
+        elif image.mode != 'RGB':
+            # Convert to RGB if not already
+            image = image.convert('RGB')
 
-        # Convert back to base64
+        # Convert back to base64 with higher quality JPEG compression
         buffered = BytesIO()
-        # Always save as JPEG as the prefix will be for jpeg
-        image.save(buffered, format="JPEG")
+        image.save(buffered, format="JPEG", quality=95, optimize=True)
         processed_base64_string = base64.b64encode(buffered.getvalue()).decode("utf-8")
 
         # Add the required data URI prefix

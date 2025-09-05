@@ -116,6 +116,14 @@ export default function HomePage() {
 
       // Create a temporary canvas for resizing
       const tempCanvas = document.createElement('canvas');
+      const tempCtx = tempCanvas.getContext('2d');
+      
+      // Set dimensions (matching the displayed canvas size)
+      tempCanvas.width = 640;
+      tempCanvas.height = 480;
+      
+      // Draw the current canvas content to the temporary canvas
+      tempCtx.drawImage(img, 0, 0, tempCanvas.width, tempCanvas.height);
 
       const payload = {
         prompt: prompt,
