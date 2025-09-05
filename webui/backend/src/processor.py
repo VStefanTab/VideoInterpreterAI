@@ -27,37 +27,38 @@ def processRequest(imageBytes, prompt):
         return None, "No frame captured"
 
     try:
-        # Remove data URI prefix if present
+        # Remove data URI prefix if present, leaving only the base64 string
         if imageBytes.startswith("data:image"):
-            imageBytes = imageBytes.split(",")[1]
+            base64_string = imageBytes.split(",")[1]
+        else:
+            base64_string = imageBytes
 
         # Convert base64 string to bytes
-        image_data = base64.b64decode(imageBytes)
+        image_data = base64.b64decode(base64_string)
 
         # Attempt to open and validate image
         image = Image.open(BytesIO(image_data))
 
         # Calculate new dimensions while maintaining aspect ratio
         max_size = 800
-        ratio = min(max_size / image.width, max_size / image.height)
-        new_size = (int(image.width * ratio), int(image.height * ratio))
-
-        # Resize image if it's larger than max_size
         if image.width > max_size or image.height > max_size:
+            ratio = min(max_size / image.width, max_size / image.height)
+            new_size = (int(image.width * ratio), int(image.height * ratio))
             image = image.resize(new_size, Image.Resampling.LANCZOS)
 
         # Convert back to base64
         buffered = BytesIO()
-        image.save(buffered, format=image.format or "JPEG")
-        image_base64 = base64.b64encode(buffered.getvalue()).decode("utf-8")
+        # Always save as JPEG as the prefix will be for jpeg
+        image.save(buffered, format="JPEG")
+        processed_base64_string = base64.b64encode(buffered.getvalue()).decode("utf-8")
 
-        # Add data URI prefix
-        image_base64 = f"data:image/jpeg;base64,{image_base64}"
+        # Add the required data URI prefix
+        final_image_string = f"data:image/jpeg;base64,{processed_base64_string}"
 
     except Exception as e:
         return None, f"Error processing image: {str(e)}"
 
-    request_id = send_request(prompt, imageBytes)
+    request_id = send_request(prompt, final_image_string)
     if request_id is None:
         return None, "Failed to send request"
 
