@@ -1,6 +1,6 @@
-# VideoInterpreterAI - Alex's branch
+# VideoInterpreterAI - Llama Universal
 
-Project for AI Video Interpretation
+AI Video Interpreter containerized and portable
 
 ## Setup
 
@@ -26,4 +26,4 @@ Stop application with `docker compose stop`. If you want to stop **and** remove 
 - Fully containerized application with **Docker compose**
 - **FastAPI** and **Flask** connectors for container communication
 - **llava-v1.5-7b LLava** model
-- Can work on **any** machine with nvidia GPU
+- Can work on **any** machine with Nvidia GPU
