@@ -31,7 +31,11 @@ services:
         
 
   llama:
-    build: ./app
+    build: 
+      context: ./app
+      args:
+        - NVIDIA_VISIBLE_DEVICES=all
+        - NVIDIA_DRIVER_CAPABILITIES=compute,utility
     runtime: nvidia
     environment:
       - NVIDIA_VISIBLE_DEVICES=all
@@ -39,8 +43,8 @@ services:
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
       interval: 10s
-      timeout: 10s
-      retries: 10
+      timeout: 20s
+      retries: 15
       start_period: 60s
     networks:
       - my-network

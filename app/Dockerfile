@@ -1,18 +1,41 @@
-FROM dustynv/llama_cpp:b5283-r36.4-cu128-24.04
+FROM nvidia/cuda:12.2.0-devel-ubuntu22.04
 
-ARG PIP_URL=https://pypi.org/simple/
-ARG CUDA_ARCH=87 
+ENV DEBIAN_FRONTEND=noninteractive
 
-RUN FORCE_CMAKE=1 \
-    CMAKE_ARGS="-DGGML_CUDA=ON -DLLAVA_BUILD=ON -DCMAKE_CUDA_ARCHITECTURES=${CUDA_ARCH}" \
-    pip install llama-cpp-python==0.3.9 --force-reinstall --upgrade --index-url ${PIP_URL}
+ARG NVIDIA_VISIBLE_DEVICES=all
+ARG NVIDIA_DRIVER_CAPABILITIES=compute,utility
 
-WORKDIR /
-RUN rm -rf /tmp/llama-cpp-python
+ENV TZ=Etc/UTC
+ENV DEBIAN_FRONTEND=noninteractive
+ENV NVIDIA_VISIBLE_DEVICES=${NVIDIA_VISIBLE_DEVICES}
+ENV NVIDIA_DRIVER_CAPABILITIES=${NVIDIA_DRIVER_CAPABILITIES}
+
+RUN apt-get update && apt-get install -y \
+    python3 \
+    python3-pip \
+    git \
+    build-essential \
+    cmake \
+    curl \
+    ninja-build \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN ln -s /usr/bin/python3 /usr/bin/python
 
 WORKDIR /opt/app
-COPY . /opt/app 
-RUN pip install --no-cache-dir --index-url ${PIP_URL} -r requirements.txt
+
+COPY requirements.txt .
+
+ENV CMAKE_ARGS="-DGGML_CUDA=ON -DLLAVA_BUILD=ON"
+ENV FORCE_CMAKE=1
+ENV LLAMA_CUDA=1
+
+RUN pip install --no-cache-dir -r requirements.txt
+
+RUN pip install llama-cpp-python \
+  --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cu123
+
+COPY . .
 
 EXPOSE 8080
 
