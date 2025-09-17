@@ -53,7 +53,7 @@ def get_model(modelpath):
             temperature=0.8,
             top_k=40,
             top_p=0.90,
-            max_tokens=128,
+            max_tokens=256,
             logits_all=False,
             verbose=True,
         )
@@ -81,7 +81,7 @@ def generate_response(prompt, img64):
         messages=[
             {
                 "role": "system",
-                "content": "You are a vision-language assistant. Your task is to first understand the user's question, then carefully analyze the attached image and provide an accurate, relevant, and detailed answer. Always respond to the user's specific question — do not just describe the image.",
+                "content": "You are LLaVA, a helpful AI that looks at images and answers questions.",
             },
             {
                 "role": "user",
@@ -133,12 +133,14 @@ def process_package():
         print(f"Error in /end: {e}")
         return jsonify({"error": "Internal server error"}), 500
 
+
 @app.route("/health", methods=["GET"])
 def health_check():
     if model_path is None or model_path not in model_cache:
         return jsonify({"status": "error", "message": "Model not loaded"}), 500
     else:
         return jsonify({"status": "ok"}), 200
+
 
 def send_request(id, response):
     url = "http://processing:5000/request"
